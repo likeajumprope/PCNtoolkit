@@ -63,7 +63,7 @@ class GPR:
 
     def fit_predict(self, X: np.ndarray, y: np.ndarray, X_test) -> np.ndarray:
         """
-        Fits and predicts the model. Used to be estimate.
+        Fits and predicts the model. 
 
 
         
@@ -72,3 +72,9 @@ class GPR:
         # ...
         raise NotImplementedError(
             f"Fit-predict method not implemented for {self.__class__.__name__}")
+    
+    def estimate():
+        """
+        Estimates the model?
+        """
+
