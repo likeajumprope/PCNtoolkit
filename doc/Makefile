@@ -4,21 +4,26 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
+AUTOAPIDIR	  = autoapi
 PORT          ?= 8004
 
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile clean show show-docs-remote
+.PHONY: help Makefile clean html show show-docs-remote
 
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
-	rm -rf $(BUILDDIR)/* _autosummary
+	rm -rf $(BUILDDIR)
+	rm -rf $(AUTOAPIDIR)
+
+html: clean
+	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 show:
-	@python -c "import webbrowser; webbrowser.open_new_tab('file://$(PWD)/_build/html/index.html')" 
+	@python -c "import webbrowser; webbrowser.open_new_tab('file://$(PWD)/$(BUILDDIR)/html/index.html')" 
 
 show-docs-remote:
-	@cd _build/html && python -m http.server $(PORT)
+	@cd $(BUILDDIR)/html && python -m http.server $(PORT)
