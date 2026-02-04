@@ -212,8 +212,7 @@ class NormData(xr.Dataset):
         NormData
             An instance of NormData.
         """
-        img = load(fsl_folder)
-        dat = img.get_fdata()
+        raise NotImplementedError("from_fsl is not yet implemented.")
 
     @classmethod
     def from_bids(cls, bids_folder, config_params) -> "NormData":  # type: ignore
@@ -232,6 +231,7 @@ class NormData(xr.Dataset):
         NormData
             An instance of NormData.
         """
+        raise NotImplementedError("from_bids is not yet implemented.")
 
     @classmethod
     def from_xarray(cls, name: str, xarray_dataset: xr.Dataset) -> NormData:
