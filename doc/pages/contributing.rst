@@ -5,11 +5,8 @@ First off, thanks for considering contributing to PCNtoolkit! 🎉👍
 
 The following is a set of guidelines for contributing to PCNtoolkit. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
 
-How Can I Contribute?
----------------------
-
 Reporting Bugs
-^^^^^^^^^^^^^^
+---------------------
 
 This section guides you through submitting a bug report. Following these guidelines helps maintainers and the community understand your report, reproduce the behavior, and find related reports.
 
@@ -27,8 +24,8 @@ Bugs are tracked as `GitHub issues <https://github.com/amarquand/PCNtoolkit/issu
 * Describe the exact steps which reproduce the problem in as much detail as possible
 * Provide specific examples to demonstrate the steps. Include links to files or GitHub projects, or copy/pasteable snippets
 
-Suggesting Enhancements
-^^^^^^^^^^^^^^^^^^^^^^^
+Suggesting New Features
+------------------------
 
 This section guides you through submitting an enhancement suggestion, including completely new features and minor improvements to existing functionality.
 
@@ -48,9 +45,6 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 
 .. note::
     To use PCNtoolkit you need to have installed `Git <https://git-scm.com/downloads>`_ and a Python version higher than 3.9 and lower than 3.13. Also, we recommend using `Anaconda <https://www.anaconda.com/download>`_ to manage Python.
-
-Setup Steps
-^^^^^^^^^^^
 
 1. **Fork the repository** - Forking is the process of creating your own personal copy of the project on GitHub. The fork lives under your GitHub account and lets you experiment, make changes, or contribute improvements without affecting the original project. See `GitHub’s guide to forking <https://docs.github.com/en/get-started/quickstart/fork-a-repo>`_.
 
@@ -82,7 +76,7 @@ Styleguides
 -----------
 
 Git Commit Messages
-^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""
 
 * Use the present tense ("Add feature" not "Added feature")
 * Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
@@ -90,7 +84,7 @@ Git Commit Messages
 * Reference issues and pull requests liberally after the first line
 
 Python Styleguide
-^^^^^^^^^^^^^^^^^
+"""""""""""""""""""
 
 All Python code must adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_, and we use ``autopep8`` for automatic code formatting. Please see the `autopep8 documentation <https://github.com/hhatto/autopep8>`_ for more details. The autopep8 settings can be found in setup.cfg.
 
@@ -101,7 +95,25 @@ Running Tests
 
     pytest test/
 
-Additional Notes
-----------------
+Building the Website
+--------------------
 
-Feel free to propose changes to this document in a pull request.
+Our website lives in the ``doc/`` folder and is built with Sphinx. When you make changes to existing documentation or add new documentation, you should build the website locally to check how everything looks. To do that:
+
+1. Go to the ``doc/`` folder:
+
+    .. code-block:: bash
+
+        cd doc
+
+2. Install the documentation dependencies:
+
+    .. code-block:: bash
+
+        pip install -r requirements.txt
+
+3. Build the website and keep it up to date: every time you save a change, the page reloads in your browser.
+
+    .. code-block:: bash
+
+        make livehtml
