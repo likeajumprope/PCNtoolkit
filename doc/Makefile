@@ -10,7 +10,7 @@ PORT          ?= 8004
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile clean html show show-docs-remote
+.PHONY: help Makefile clean html show show-docs-remote livehtml
 
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
@@ -27,3 +27,6 @@ show:
 
 show-docs-remote:
 	@cd $(BUILDDIR)/html && python -m http.server $(PORT)
+
+livehtml:
+	@sphinx-autobuild -b html "$(SOURCEDIR)" "$(BUILDDIR)/html" --port $(PORT) $(SPHINXOPTS) $(O)
