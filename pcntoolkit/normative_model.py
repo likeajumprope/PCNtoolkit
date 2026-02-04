@@ -740,12 +740,26 @@ class NormativeModel:
             coords={"observations": data.observations},
         )
 
+        # Also compute baseline logp on scaled Y for proper MSLL calculation
+        data["baseline_logp"] = xr.DataArray(
+            np.zeros((data.X.shape[0], len(respvar_intersection))),
+            dims=("observations", "response_vars"),
+            coords={"observations": data.observations},
+        )
+
         Output.print(Messages.COMPUTING_LOGP, n_models=len(respvar_intersection))
         for responsevar in respvar_intersection:
             resp_predict_data = data.sel({"response_vars": responsevar})
             X, be, _, Y, _ = self.extract_data(resp_predict_data)
             Output.print(Messages.COMPUTING_LOGP_MODEL, model_name=responsevar)
             data["logp"].loc[{"response_vars": responsevar}] = self[responsevar].elemwise_logp(X, be, Y)
+            
+            # Compute baseline logp on scaled Y (Gaussian with mean/std of scaled Y)
+            y_scaled = Y.values
+            mu_null = np.mean(y_scaled)
+            sigma_null = np.std(y_scaled)
+            baseline_logp = -0.5 * np.log(2 * np.pi * sigma_null**2) - ((y_scaled - mu_null)**2) / (2 * sigma_null**2)
+            data["baseline_logp"].loc[{"response_vars": responsevar}] = baseline_logp
 
         self.postprocess(data)
         return data

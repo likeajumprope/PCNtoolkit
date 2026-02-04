@@ -348,10 +348,16 @@ class Evaluator:
         """
         Calculate Mean Standardized Log Loss.
 
+        MSLL compares the model's log-likelihood to a baseline Gaussian predictor.
+        Both are computed on the same (scaled) data to ensure proper comparison,
+        as log-likelihoods are scale-dependent.
+
         Parameters
         ----------
         data : NormData
-            Data container with predictions and actual values
+            Data container with predictions and actual values.
+            Must contain 'logp' (model log-likelihood) and 'baseline_logp'
+            (baseline log-likelihood), both computed on scaled data.
 
         Returns
         -------
@@ -359,16 +365,21 @@ class Evaluator:
             Mean standardized log loss between actual and predicted values
         """
         logp = data["logp"].values
-        y = data["Y"].values
         
         # model mean log loss (negative log-likelihood)
         mll_model = -np.mean(logp)
 
-        # baseline: Gaussian with mean and std of y_true
-        mu_null = np.mean(y)
-        sigma_null = np.std(y)
-        null_logp = -0.5 * np.log(2 * np.pi * sigma_null**2) - ((y - mu_null)**2) / (2 * sigma_null**2)
-        mll_null = -np.mean(null_logp)
+        # Use pre-computed baseline logp (computed on scaled Y in compute_logp)
+        if "baseline_logp" in data:
+            baseline_logp = data["baseline_logp"].values
+            mll_null = -np.mean(baseline_logp)
+        else:
+            # Fallback for backward compatibility (uses unscaled Y - not ideal)
+            y = data["Y"].values
+            mu_null = np.mean(y)
+            sigma_null = np.std(y)
+            null_logp = -0.5 * np.log(2 * np.pi * sigma_null**2) - ((y - mu_null)**2) / (2 * sigma_null**2)
+            mll_null = -np.mean(null_logp)
 
         # standardized
         return mll_model - mll_null
