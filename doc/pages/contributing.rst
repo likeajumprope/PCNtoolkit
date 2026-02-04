@@ -72,22 +72,6 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 .. note::
     **Alternative quicker option:** To simplify and automate commands that are frequently used during development, we use `GNU Make <https://www.gnu.org/software/make/>`_. Common development tasks are defined as short scripts in the ``Makefile``. For example, steps 3 and 4 can be done with a single command: ``make dev-setup``. After it, you should activate the environment with ``conda activate .ptk-dev``.
 
-Styleguides
------------
-
-Git Commit Messages
-"""""""""""""""""""
-
-* Use the present tense ("Add feature" not "Added feature")
-* Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
-* Limit the first line to 72 characters or less
-* Reference issues and pull requests liberally after the first line
-
-Python Styleguide
-"""""""""""""""""""
-
-All Python code must adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_, and we use ``autopep8`` for automatic code formatting. Please see the `autopep8 documentation <https://github.com/hhatto/autopep8>`_ for more details. The autopep8 settings can be found in setup.cfg.
-
 Running Tests
 -------------
 
@@ -102,18 +86,34 @@ Our website lives in the ``doc/`` folder and is built with Sphinx. When you make
 
 1. Go to the ``doc/`` folder:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        cd doc
+       cd doc
 
 2. Install the documentation dependencies:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        pip install -r requirements.txt
+       pip install -r requirements.txt
 
 3. Build the website and keep it up to date: every time you save a change, the page reloads in your browser.
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        make livehtml
+       make livehtml
+
+Code style
+-----------
+
+Git Commit Messages
+"""""""""""""""""""
+
+* Use the present tense ("Add feature" not "Added feature")
+* Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
+* Limit the first line to 72 characters or less
+* Reference issues and pull requests liberally after the first line
+
+Python code style
+"""""""""""""""""""
+
+All Python code must adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_, and we use ``autopep8`` for automatic code formatting. Please see the `autopep8 documentation <https://github.com/hhatto/autopep8>`_ for more details. The autopep8 settings can be found in setup.cfg.
