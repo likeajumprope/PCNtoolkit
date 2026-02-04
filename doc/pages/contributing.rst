@@ -44,18 +44,21 @@ Enhancement suggestions are tracked as `GitHub issues <https://github.com/amarqu
 Setting up your local development environment
 -----------------
 
-You can contribute code yourself. PCNtoolkit runs on Linux, Mac, or Windows with WSL. We recommend using Anaconda or Miniconda to manage Python. To perform the steps below, you need to have installed Git and a Python version higher than 3.9 and lower than 3.13
+You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Mac, or Windows with WSL. To contribute to PCNtoolkit you can follow the steps below to set your local development environment:
+
+.. note::
+    To use PCNtoolkit you need to have installed `Git <https://git-scm.com/downloads>`_ and a Python version higher than 3.9 and lower than 3.13. Also, we recommend using `Anaconda <https://www.anaconda.com/download>`_ to manage Python.
 
 Setup Steps
 ^^^^^^^^^^^
 
-1. **Fork the repository** - Forking is the process of creating your own personal copy of the project on GitHub. The fork lives under your GitHub account and lets you experiment, make changes, or contribute improvements without affecting the original project.
+1. **Fork the repository** - Forking is the process of creating your own personal copy of the project on GitHub. The fork lives under your GitHub account and lets you experiment, make changes, or contribute improvements without affecting the original project. See `GitHub’s guide to forking <https://docs.github.com/en/get-started/quickstart/fork-a-repo>`_.
 
 2. **Clone your fork** - Cloning is the process of downloading your GitHub copy of the project onto your computer, so you can make changes to the code locally:
 
    .. code-block:: bash
 
-       git clone https://github.com/your-username/pcntoolkit.git
+       git clone https://github.com/your-username/PCNtoolkit.git
 
 3. **Create environment** - A Python environment is an isolated workspace that contains its own Python installation and libraries. This prevents conflicts with other Python projects on your system. Here, we create an environment called ``.ptk-dev`` and then activate it.
 
@@ -64,15 +67,17 @@ Setup Steps
        conda create -n .ptk-dev
        conda activate .ptk-dev
 
-4. **Install ** 
+4. **Install the dependencies** 
+
    .. code-block:: bash
 
        pip install -e ".[dev]"
 
-The idea behind ``pip install -e`` . is to make it easy to work on the code while you are developing it. Instead of treating the project as a finished product, Python treats it as “live” code, so you can edit it and test your changes right away. Also, ``".[dev]"`` specifies additional development dependencies.
-It tells pip to install extra tools that are useful when developing the project (for example for testing, or documentation), in addition to the main package itself.
+The idea behind ``pip install -e`` is to make it easy to work on the code while you are developing it. Instead of treating the project as a finished product, Python treats it as “live” code, so you can edit it and test your changes right away.
+Also, ``".[dev]"`` lets you install extra dependencies that are useful when developing the project (for example for testing, or documentation).
 
-**Alternative quicker option:** To simplify and automate commands that are frequently used during development, we use [GNU Make](https://www.gnu.org/software/make/).
+.. note::
+    **Alternative quicker option:** To simplify and automate commands that are frequently used during development, we use `GNU Make <https://www.gnu.org/software/make/>`_.
 Common development tasks are defined as short scripts in the ``Makefile``.
 For example, steps 3 and 4 can be done with a single command: ``make dev-setup``.
 After it finishes, you should activate the environment with ``conda activate .ptk-dev``
