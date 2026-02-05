@@ -344,45 +344,41 @@ class Evaluator:
         yhat = data["Yhat"].values
         return float(explained_variance_score(y, yhat))
 
-    def _evaluate_msll(self, data: NormData) -> float:
+    def _evaluate_msll(self, data: NormData) -> float | None:
         """
         Calculate Mean Standardized Log Loss.
 
-        MSLL compares the model's log-likelihood to a baseline Gaussian predictor.
-        Both are computed on the same (scaled) data to ensure proper comparison,
-        as log-likelihoods are scale-dependent.
+        MSLL compares the fitted model's log loss to a baseline Gaussian model.
+        Note that both should be computed on the same (scaled) data to ensure 
+        proper comparison, as log-likelihoods are scale-dependent.
 
         Parameters
         ----------
         data : NormData
             Data container with predictions and actual values.
-            Must contain 'logp' (model log-likelihood) and 'baseline_logp'
-            (baseline log-likelihood), both computed on scaled data.
 
         Returns
         -------
-        float
+        float | None
             Mean standardized log loss between actual and predicted values
         """
+        # Fitted model mean log loss (negative log-likelihood)
         logp = data["logp"].values
-        
-        # model mean log loss (negative log-likelihood)
         mll_model = -np.mean(logp)
 
-        # Use pre-computed baseline logp (computed on scaled Y in compute_logp)
-        if "baseline_logp" in data:
-            baseline_logp = data["baseline_logp"].values
-            mll_null = -np.mean(baseline_logp)
-        else:
-            # Fallback for backward compatibility (uses unscaled Y - not ideal)
-            y = data["Y"].values
-            mu_null = np.mean(y)
-            sigma_null = np.std(y)
-            null_logp = -0.5 * np.log(2 * np.pi * sigma_null**2) - ((y - mu_null)**2) / (2 * sigma_null**2)
-            mll_null = -np.mean(null_logp)
+        # Check that the baseline logp is calculated on the scaled data
+        if "baseline_logp" not in data:
+            print("Cannot compute MSLL because baseline log probability is "
+                  "not computed on scaled data.")
+            return None
 
-        # standardized
-        return mll_model - mll_null
+        # Baseline Gaussian model mean log loss (negative log-likelihood)
+        baseline_logp = data["baseline_logp"].values
+        mll_null = -np.mean(baseline_logp)
+
+        # Compute MSLL (mean standardized log loss)
+        msll = mll_model - mll_null
+        return float(msll)
 
     def _evaluate_nll(self, data: NormData) -> float:
         """
