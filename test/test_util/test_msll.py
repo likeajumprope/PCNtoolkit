@@ -9,7 +9,6 @@ The fix ensures both are computed on the same (scaled) data.
 """
 
 import numpy as np
-import xarray as xr
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.normative_model import NormativeModel
@@ -17,7 +16,22 @@ from pcntoolkit.regression_model.blr import BLR
 
 
 def create_test_data(n_samples: int = 100, scale_factor: float = 1.0, seed: int = 42):
-    """Create synthetic test data with a specified scale factor."""
+    """Create synthetic test data with a specified scale factor.
+    
+    Parameters
+    ----------
+    n_samples : int
+        Number of samples to generate
+    scale_factor : float
+        Factor to scale the response variable by
+    seed : int
+        Random seed for reproducibility
+        
+    Returns
+    -------
+    NormData
+        Synthetic dataset with scaled response variables
+    """
     np.random.seed(seed)
     
     # Create covariates (age-like)
@@ -32,16 +46,13 @@ def create_test_data(n_samples: int = 100, scale_factor: float = 1.0, seed: int 
     batch_effects = np.random.choice([0, 1], size=(n_samples, 1)).astype(str)
     
     # Create NormData
-    data = NormData(
+    data = NormData.from_ndarrays(
         name="test_data",
-        data_vars={
-            "X": xr.DataArray(X, dims=("observations", "covariates")),
-            "Y": xr.DataArray(Y, dims=("observations", "response_vars")),
-            "batch_effects": xr.DataArray(batch_effects, dims=("observations", "batch_effect_dims")),
-            "subject_ids": xr.DataArray(np.arange(n_samples), dims=("observations",)),
-        },
-        coords={
-            "observations": np.arange(n_samples),
+        X=X,
+        Y=Y,
+        batch_effects=batch_effects,
+        subject_ids=np.arange(n_samples),
+        attrs={
             "covariates": ["age"],
             "response_vars": ["test_metric"],
             "batch_effect_dims": ["site"],
