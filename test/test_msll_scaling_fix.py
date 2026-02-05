@@ -52,7 +52,7 @@ def create_test_data(n_samples: int = 100, scale_factor: float = 1.0, seed: int 
     return data
 
 
-@pytest.mark.parametrize("scale_factor", [1.0, 1e-4, 1e-6, 1e3])
+@pytest.mark.parametrize("scale_factor", [1.0, 1e-4, 1e-8, 1e4])
 def test_msll_scale_independence(scale_factor, tmp_path):
     """
     Test that MSLL values are similar regardless of data scale.
@@ -135,8 +135,8 @@ def test_msll_consistency_across_scales(tmp_path):
     msll_diff = abs(msll_values[1.0] - msll_values[1e-4])
     print(f"MSLL difference between scales: {msll_diff}")
     
-    # Allow some numerical tolerance
-    assert msll_diff < 0.5, (
+    # Allow some numerical tolerance depending on the specs of the developers PC
+    assert msll_diff < 1e-8, (
         f"MSLL differs too much between scales: "
         f"scale=1.0 -> {msll_values[1.0]}, scale=1e-4 -> {msll_values[1e-4]}"
     )
