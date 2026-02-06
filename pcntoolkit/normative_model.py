@@ -134,10 +134,9 @@ class NormativeModel:
             self[responsevar].fit(X, be, be_maps, Y)
         self.is_fitted = True
         self.postprocess(data)
-        self.predict(data)  # Make sure everything is evaluated and saved
-        # self.compute_correlation_matrix(data)
         if self.savemodel:  # Make sure model is saved
             self.save()
+        self.predict(data)  # Make sure everything is evaluated and saved
 
     def predict(self, data: NormData) -> NormData:
         """Computes Z-scores, centiles, logp, yhat for each observation using fitted regression models."""
@@ -156,10 +155,8 @@ class NormativeModel:
             plot_qq(data, plot_id_line=True, save_dir=plotdir)
             plot_centiles(
                 self,
+                data,
                 save_dir=plotdir,
-                show_other_data=True,
-                harmonize_data=True,
-                scatter_data=data,
             )
         return data
 
@@ -169,8 +166,6 @@ class NormativeModel:
         """
         self.fit(fit_data)
         self.predict(predict_data)
-        if self.savemodel:  # Make sure model is saved
-            self.save()
         return predict_data
 
     def transfer(self, transfer_data: NormData, save_dir: str | None = None, **kwargs) -> NormativeModel:
@@ -207,12 +202,12 @@ class NormativeModel:
             resp_transfer_data = transfer_data.sel({"response_vars": responsevar})
             X, be, be_maps, Y, _ = new_model.extract_data(resp_transfer_data)
             new_model[responsevar] = self[responsevar].transfer(X, be, be_maps, Y, **kwargs)
-            new_model[responsevar].be_maps = copy.deepcopy(be_maps)
+            #new_model[responsevar].be_maps = copy.deepcopy(be_maps)
         new_model.is_fitted = True
         new_model.postprocess(transfer_data)
-        new_model.predict(transfer_data)  # Make sure everything is evaluated and saved
         if new_model.savemodel:
             new_model.save()
+        new_model.predict(transfer_data)  # Make sure everything is evaluated and saved
         return new_model
 
     def transfer_predict(
@@ -698,8 +693,9 @@ class NormativeModel:
                         Warnings.CENTILES_ALREADY_COMPUTED_FOR_CENTILES, dataset_name=data.attrs["name"], centiles=centiles
                     )
                     return data
-            data = data.drop_vars(["centiles"])
-            data = data.drop_dims(["centile"])
+            del data.coords['centile']
+            del data.dims.mapping['centile']
+            del data['centiles']
 
         respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
         data["centiles"] = xr.DataArray(
@@ -736,11 +732,6 @@ class NormativeModel:
             - Logp: log-probability of the response variables per datapoint
         """
         self.preprocess(data)
-
-        # Drop the centiles and dimensions if they already exist
-        centiles_already_computed = "logp" in data
-        if centiles_already_computed:
-            data = data.drop_vars(["logp"])
 
         respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
         data["logp"] = xr.DataArray(
@@ -806,9 +797,10 @@ class NormativeModel:
                 if all([c in data.offset.values for c in offsets]):
                     Output.warning(Warnings.THRIVELINES_ALREADY_COMPUTED_FOR, dataset_name=data.attrs["name"], offsets=offsets)
                     return data
-            data = data.drop_vars(["thrive_Z"])
-            data = data.drop_vars(["thrive_Y"])
-            data = data.drop_dims(["offset"])
+            del data["thrive_Z"]
+            del data["thrive_Y"]
+            del data.coords["offset"]
+            del data.dims.mapping["offset"]
         data.attrs["z_thrive"] = z_thrive
 
         # Make Z-score predictions if needed

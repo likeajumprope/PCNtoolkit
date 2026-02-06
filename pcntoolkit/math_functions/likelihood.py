@@ -12,7 +12,7 @@ import xarray as xr
 from pcntoolkit.math_functions.basis_function import BsplineBasisFunction
 from pcntoolkit.math_functions.factorize import *
 from pcntoolkit.math_functions.prior import BasePrior, make_prior, prior_from_args
-from pcntoolkit.math_functions.shash import S, S_inv, SHASHb, SHASHo, SHASHo2, m
+from pcntoolkit.math_functions.shash import S, S_inv, SHASHb, SHASHo, SHASHo2, m, m1m2
 
 
 class Likelihood(ABC):
@@ -321,8 +321,9 @@ class SHASHbLikelihood(Likelihood):
     def forward(self, *args, **kwargs):
         mu, sigma, epsilon, delta = args
         Y = kwargs.get("Y", None)
-        true_mu = m(epsilon, delta, 1)
-        true_sigma = np.sqrt((m(epsilon, delta, 2) - true_mu**2))
+        m1, m2 = m1m2(epsilon, delta)
+        true_mu = m1
+        true_sigma = np.sqrt((m2 - true_mu**2))
         SHASH_centered = (Y - mu) / sigma
         SHASH_uncentered = SHASH_centered * true_sigma + true_mu
         Z = S(SHASH_uncentered, epsilon, delta)
@@ -331,8 +332,9 @@ class SHASHbLikelihood(Likelihood):
     def backward(self, *args, **kwargs):
         mu, sigma, epsilon, delta = args
         Z = kwargs.get("Z", None)
-        true_mu = m(epsilon, delta, 1)
-        true_sigma = np.sqrt((m(epsilon, delta, 2) - true_mu**2))
+        m1, m2 = m1m2(epsilon, delta)
+        true_mu = m1
+        true_sigma = np.sqrt((m2 - true_mu**2))
         SHASH_uncentered = S_inv(Z, epsilon, delta)
         SHASH_centered = (SHASH_uncentered - true_mu) / true_sigma
         Y = SHASH_centered * sigma + mu
@@ -548,15 +550,11 @@ class BetaLikelihood(Likelihood):
         Y: xr.DataArray,
     ) -> pm.Model:
         with model:
-            alpha_samples = self.alpha.compile(model, X, be, be_maps, Y)
-            beta_samples = self.beta.compile(model, X, be, be_maps, Y)
-
-            alpha_samples = pm.Deterministic("alpha_samples", alpha_samples, dims=self.alpha.sample_dims)
-            beta_samples = pm.Deterministic("beta_samples", beta_samples, dims=self.beta.sample_dims)
+            compiled_params = self.compile_params(model, X, be, be_maps, Y)
+            compiled_params = {k: v[0] for k, v in compiled_params.items()}
             pm.Beta(
                 "Yhat",
-                alpha=alpha_samples,
-                beta=beta_samples,
+                **compiled_params,
                 observed=model["Y"],
                 dims="observations",
             )
@@ -623,43 +621,73 @@ class BetaLikelihood(Likelihood):
 
 
 def get_default_normal_likelihood() -> NormalLikelihood:
-    mu = make_prior(
-        # Mu is linear because we want to allow the mean to vary as a function of the covariates.
-        linear=True,
-        # The slope coefficients are assumed to be normally distributed, with a mean of 0 and a standard deviation of 10.
-        slope=make_prior(dist_name="Normal", dist_params=(0.0, 10.0)),
-        # The intercept is random, because we expect the intercept to vary between sites and sexes.
-        intercept=make_prior(
-            random=True,
-            # Mu is the mean of the intercept, which is normally distributed with a mean of 0 and a standard deviation of 1.
-            mu=make_prior(dist_name="Normal", dist_params=(0.0, 1.0)),
-            # Sigma is the scale at which the intercepts vary. It is a positive parameter, so we have to map it to the positive domain.
-            sigma=make_prior(dist_name="Normal", dist_params=(0.0, 1.0), mapping="softplus", mapping_params=(0.0, 3.0)),
-        ),
-        # We use a B-spline basis function to allow for non-linearity in the mean.
-        basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
-    )
-    sigma = make_prior(
-        # Sigma is also linear, because we want to allow the standard deviation to vary as a function of the covariates: heteroskedasticity.
-        linear=True,
-        # The slope coefficients are assumed to be normally distributed, with a mean of 0 and a standard deviation of 2.
-        slope=make_prior(dist_name="Normal", dist_params=(0.0, 2.0)),
-        # The intercept is not random, because we assume the intercept of the variance to be the same for all sites and sexes.
-        intercept=make_prior(dist_name="Normal", dist_params=(1.0, 1.0)),
-        # We use a B-spline basis function to allow for non-linearity in the standard deviation.
-        basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
-        # We use a softplus mapping to ensure that sigma is strictly positive.
-        mapping="softplus",
-        # We scale the softplus mapping by a factor of 3, to avoid spikes in the resulting density.
-        # The parameters (a, b, c) provided to a mapping f are used as: f_abc(x) = f((x - a) / b) * b + c
-        # This basically provides an affine transformation of the softplus function.
-        # a -> horizontal shift
-        # b -> scaling
-        # c -> vertical shift
-        # You can leave c out, and it will default to 0.
-        mapping_params=(0.0, 3.0),
-    )
+    # Random effect in mu, and also bsplines for mu and sigma
+    likelihood = NormalLikelihood(
+            mu=make_prior(
+                # Mu is linear because we want to allow the mean to vary as a function of the covariates.
+                linear=True,
+                # The slope coefficients are assumed to be normally distributed, with a mean of 0 and a standard deviation of 2.
+                slope=make_prior(dist_params=(0.0, 3.0)),
+                # The intercept is random, because we expect the intercept to vary between sites and sexes.
+                intercept=make_prior(
+                    random=True,
+                    # Mu is the mean of the intercept, which is  distributed with a mean of 0 and a standard deviation of 1.
+                    mu=make_prior(dist_params=(0, 1)),
+                    # Sigma is the scale at which the intercepts vary. It is a positive parameter, so we sample from a Gamma distribution
+                    sigma=make_prior(
+                        dist_name="Gamma",
+                        dist_params=(1, 0.5),
+                    ),
+                ),
+                basis_function=BsplineBasisFunction(),
+            ),
+            sigma=make_prior(
+                # Sigma is also linear, because we want to allow the standard deviation to vary as a function of the covariates: heteroskedasticity.
+                linear=True,
+                # The slope coefficients are assumed to be normally distributed, with a mean of 0 and a standard deviation of 2.
+                slope=make_prior(dist_params=(0.0, 2.0)),
+                # The intercept is not random, because we assume the intercept of the variance to be the same for all sites and sexes.
+                intercept=make_prior(dist_params=(0.0, 1.0)),
+                # We use a softplus mapping to ensure that sigma is strictly positive.
+                mapping="softplus",
+                # We scale the softplus mapping by a factor of 2, to avoid spikes in the resulting density.
+                # The parameters (a, b, c) provided to a mapping f are used as: f_abc(x) = f((x - a) / b) * b + c
+                # This basically provides an affine transformation of the softplus function.
+                # a -> horizontal shift
+                # b -> scaling
+                # c -> vertical shift
+                # You can leave c out, and it will default to 0.
+                mapping_params=(0, 2),
+                # We use a B-spline basis function to allow for non-linearity in the standard deviation.
+                basis_function=BsplineBasisFunction(),
+            ),
+        )
 
-    # Set the likelihood with the priors we just created.
-    likelihood = NormalLikelihood(mu, sigma)
+    # mu = make_prior(
+    #     linear=True,
+    #     slope=make_prior(dist_params=(0, 2)),
+    #     intercept=make_prior(
+    #         random=True,
+    #         mu=make_prior(dist_params=(0.0, 1.0)),
+    #         sigma=make_prior(
+    #             dist_params=(1.0, 1.0),
+    #             mapping="softplus",
+    #             mapping_params=(0.0, 2.0),
+    #         ),
+    #     ),
+    #     # We use a B-spline basis function to allow for non-linearity in the mean.
+    #     basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+    # )
+    # sigma = make_prior(
+    #     linear=True,
+    #     slope=make_prior(dist_params=(0.0, 2.0)),
+    #     intercept=make_prior(dist_params=(1.0, 2.0)),
+    #     basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+    #     mapping="softplus",
+    #     mapping_params=(0.0, 2.0),
+    # )
+
+    # # Set the likelihood with the priors we just created.
+    # likelihood = NormalLikelihood(mu, sigma)
+
     return likelihood

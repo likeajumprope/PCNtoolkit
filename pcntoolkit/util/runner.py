@@ -35,7 +35,6 @@ class Runner:
     preamble: str = "module load anaconda3"
     memory: str = "5gb"
     max_retries: int = 3
-    random_sleep_scale: float = 0.1
     log_dir: str = ""
     temp_dir: str = ""
 
@@ -49,7 +48,6 @@ class Runner:
         time_limit: str | int = "00:05:00",
         memory: str = "5GB",
         max_retries: int = 3,
-        random_sleep_scale: float = 0.1,
         environment: Optional[str] = None,
         cross_validate: bool = False,
         cv_folds: int = 5,
@@ -93,8 +91,9 @@ class Runner:
         self.job_type = job_type
         self.n_batches = n_batches
         self.batch_size = batch_size
-        if self.n_batches is not None and self.batch_size is not None:
-            self.n_batches = None
+        if (self.n_batches is not None) and (self.batch_size is not None):
+            Output.warning(Warnings.BATCH_SIZE_AND_N_BATCHES_SPECIFIED, n_batches=self.n_batches, batch_size=self.batch_size)
+            self.batch_size = None
         self.n_cores = n_cores
         try:
             if isinstance(time_limit, str):
@@ -108,7 +107,6 @@ class Runner:
             raise ValueError(Output.error(Errors.ERROR_PARSING_TIME_LIMIT, time_limit_str=time_limit))
         self.memory = memory
         self.max_retries = max_retries
-        self.random_sleep_scale = random_sleep_scale
         if parallelize:
             if not environment:
                 raise ValueError(Output.error(Errors.ERROR_NO_ENVIRONMENT_SPECIFIED))
@@ -151,7 +149,7 @@ class Runner:
             if observe:
                 self.job_observer = JobObserver(self.active_jobs, self.job_type, self.unique_log_dir, self.task_id)
                 self.job_observer.wait_for_jobs()
-                self.active_jobs, self.finished_jobs, self.failed_jobs = self.check_jobs_status()
+                _, self.finished_jobs, self.failed_jobs = self.check_jobs_status()
                 if data_sources:
                     for data_source in data_sources:
                         self.load_data(data_source)
@@ -188,7 +186,11 @@ class Runner:
         Output.print(Messages.LOG_DIR_CREATED, log_dir=self.unique_log_dir)
 
     def fit(
-        self, model: NormativeModel, data: NormData, save_dir: Optional[str] = None, observe: bool = True
+        self,
+        model: NormativeModel,
+        data: NormData,
+        save_dir: Optional[str] = None,
+        observe: bool = True,
     ) -> NormativeModel | None:
         """
         Fit a normative model on a dataset.
@@ -292,7 +294,7 @@ class Runner:
         return self.wait_or_finish(observe, None, data)
 
     def transfer(
-        self, model: NormativeModel, data: NormData, save_dir: Optional[str] = None, observe: bool = True
+        self, model: NormativeModel, data: NormData, save_dir: Optional[str] = None, observe: bool = True, **kwargs
     ) -> NormativeModel | None:
         """
         Transfer a normative model to a new dataset.
@@ -319,7 +321,7 @@ class Runner:
         self.save_dir = save_dir
         self.set_task_id("transfer", model, data)
         self.create_temp_and_log_dir()
-        fn = self.get_transfer_chunk_fn(model, save_dir)
+        fn = self.get_transfer_chunk_fn(model, save_dir, **kwargs)
         self.submit_jobs(fn, data, mode="unary")
         return self.wait_or_finish(observe, None, data)
 
@@ -329,7 +331,7 @@ class Runner:
         fit_data: NormData,
         predict_data: Optional[NormData] = None,
         save_dir: Optional[str] = None,
-        observe: bool = True,
+        observe: bool = True, **kwargs,
     ) -> NormativeModel | None:
         """
         Transfer a normative model to a new dataset and predict on another dataset.
@@ -358,12 +360,12 @@ class Runner:
         self.save_dir = save_dir
         self.set_task_id("transfer_predict", model, fit_data)
         self.create_temp_and_log_dir()
-        fn = self.get_transfer_predict_chunk_fn(model, save_dir)
+        fn = self.get_transfer_predict_chunk_fn(model, save_dir, **kwargs)
         self.submit_jobs(fn, fit_data, predict_data, mode="binary")
         return self.wait_or_finish(observe, None, fit_data, predict_data)
 
     def extend(
-        self, model: NormativeModel, data: NormData, save_dir: Optional[str] = None, observe: bool = True
+        self, model: NormativeModel, data: NormData, save_dir: Optional[str] = None, observe: bool = True, **kwargs
     ) -> NormativeModel | None:
         """
         Extend a normative model on a dataset.
@@ -390,7 +392,7 @@ class Runner:
         self.save_dir = save_dir
         self.set_task_id("extend", model, data)
         self.create_temp_and_log_dir()
-        fn = self.get_extend_chunk_fn(model, save_dir)
+        fn = self.get_extend_chunk_fn(model, save_dir, **kwargs)
         self.submit_jobs(fn, data, mode="unary")
         return self.wait_or_finish(observe, None, data)
 
@@ -400,7 +402,7 @@ class Runner:
         fit_data: NormData,
         predict_data: Optional[NormData] = None,
         save_dir: Optional[str] = None,
-        observe: bool = True,
+        observe: bool = True, **kwargs,
     ) -> NormativeModel | None:
         """
         Extend a normative model on a dataset and predict on another dataset.
@@ -428,7 +430,7 @@ class Runner:
         self.save_dir = save_dir
         self.set_task_id("extend_predict", model, fit_data)
         self.create_temp_and_log_dir()
-        fn = self.get_extend_predict_chunk_fn(model, save_dir)
+        fn = self.get_extend_predict_chunk_fn(model, save_dir, **kwargs)
         self.submit_jobs(fn, fit_data, predict_data, mode="binary")
         return self.wait_or_finish(observe, None, fit_data, predict_data)
 
@@ -495,7 +497,7 @@ class Runner:
 
             return predict_chunk_fn
 
-    def get_transfer_chunk_fn(self, model: NormativeModel, save_dir: str) -> Callable:
+    def get_transfer_chunk_fn(self, model: NormativeModel, save_dir: str, **kwargs) -> Callable:
         """Returns a callable that transfers a model on a chunk of data"""
         if self.cross_validate:
 
@@ -507,6 +509,7 @@ class Runner:
                     model.transfer(
                         train_data,
                         save_dir=os.path.join(save_dir, "folds", f"fold_{i_fold}"),
+                        **kwargs,
                     )
 
             return kfold_transfer_chunk_fn
@@ -514,11 +517,11 @@ class Runner:
 
             def transfer_chunk_fn(data: NormData):
                 model.set_save_dir(save_dir)
-                model.transfer(data, save_dir=model.save_dir)
+                model.transfer(data, save_dir=model.save_dir, **kwargs)
 
             return transfer_chunk_fn
 
-    def get_transfer_predict_chunk_fn(self, model: NormativeModel, save_dir: str) -> Callable:
+    def get_transfer_predict_chunk_fn(self, model: NormativeModel, save_dir: str, **kwargs) -> Callable:
         if self.cross_validate:
 
             def kfold_transfer_predict_chunk_fn(chunk: NormData, unused_predict_data: Optional[NormData] = None):
@@ -534,6 +537,7 @@ class Runner:
                         train_data,
                         predict_data,
                         save_dir=os.path.join(save_dir, "folds", f"fold_{i_fold}"),
+                        **kwargs,
                     )
 
             return kfold_transfer_predict_chunk_fn
@@ -542,11 +546,11 @@ class Runner:
             def transfer_predict_chunk_fn(train_data: NormData, predict_data: NormData):
                 if predict_data is None:
                     raise ValueError(Output.error(Errors.ERROR_PREDICT_DATA_REQUIRED))
-                model.transfer_predict(train_data, predict_data, save_dir=save_dir)
+                model.transfer_predict(train_data, predict_data, save_dir=save_dir, **kwargs)
 
             return transfer_predict_chunk_fn
 
-    def get_extend_chunk_fn(self, model: NormativeModel, save_dir: str) -> Callable:
+    def get_extend_chunk_fn(self, model: NormativeModel, save_dir: str, **kwargs) -> Callable:
         if self.cross_validate:
 
             def kfold_extend_chunk_fn(chunk: NormData):
@@ -557,6 +561,7 @@ class Runner:
                     model.extend(
                         data=train_data,
                         save_dir=os.path.join(save_dir, "folds", f"fold_{i_fold}"),
+                        **kwargs,
                     )
 
             return kfold_extend_chunk_fn
@@ -564,11 +569,11 @@ class Runner:
 
             def extend_chunk_fn(data: NormData):
                 model.set_save_dir(save_dir)
-                model.extend(data=data, save_dir=save_dir)
+                model.extend(data=data, save_dir=save_dir, **kwargs)
 
             return extend_chunk_fn
 
-    def get_extend_predict_chunk_fn(self, model: NormativeModel, save_dir: str) -> Callable:
+    def get_extend_predict_chunk_fn(self, model: NormativeModel, save_dir: str, **kwargs) -> Callable:
         if self.cross_validate:
 
             def kfold_extend_predict_chunk_fn(chunk: NormData, unused_predict_data: Optional[NormData] = None):
@@ -584,6 +589,7 @@ class Runner:
                         extend_data=train_data,
                         predict_data=predict_data,
                         save_dir=os.path.join(save_dir, "folds", f"fold_{i_fold}"),
+                        **kwargs,
                     )
 
             return kfold_extend_predict_chunk_fn
@@ -593,7 +599,7 @@ class Runner:
                 if predict_data is None:
                     raise ValueError(Output.error(Errors.ERROR_PREDICT_DATA_REQUIRED))
                 model.set_save_dir(save_dir)
-                model.extend_predict(extend_data=train_data, predict_data=predict_data, save_dir=save_dir)
+                model.extend_predict(extend_data=train_data, predict_data=predict_data, save_dir=save_dir, **kwargs)
 
             return extend_predict_chunk_fn
 
@@ -713,6 +719,16 @@ class Runner:
         """
 
         if self.parallelize:
+            if self.batch_size is not None and self.n_batches is not None:
+                if not (self.n_response_vars // self.n_batches == self.batch_size):
+                    raise ValueError(
+                        Output.error(
+                            Errors.ERROR_BATCH_SIZE_AND_N_BATCHES_MISMATCH,
+                            batch_size=self.batch_size,
+                            n_batches=self.n_batches,
+                            n_response_vars=len(first_data_source.response_vars),
+                        )
+                    )
             if self.n_batches is None and self.batch_size is not None:
                 self.n_batches = len(first_data_source.response_vars) // self.batch_size
             elif self.n_batches is not None and self.batch_size is None:
@@ -788,10 +804,15 @@ class Runner:
 source activate {self.environment}
 # Force Python to use unbuffered output
 export PYTHONUNBUFFERED=1
+# Ensure that it does not spawn multiple threads randomly.
+export OMP_NUM_THREADS={self.n_cores}
+export MKL_NUM_THREADS={self.n_cores}
+export OPENBLAS_NUM_THREADS={self.n_cores}
+export NUMEXPR_NUM_THREADS={self.n_cores}
 # Force stdout/stderr to be unbuffered
 exec 1> >(tee -a {out_file})
 exec 2> >(tee -a {err_file})
-python {current_file_path} {python_callable_path} {data_path} {self.max_retries} {self.random_sleep_scale}
+python {current_file_path} {python_callable_path} {data_path} {self.max_retries} 
 
 exit_code=$?
 if [ $exit_code -eq 0 ]; then
@@ -831,6 +852,11 @@ exit $exit_code
 source activate {self.environment}
 # Force Python to use unbuffered output
 export PYTHONUNBUFFERED=1
+# Ensure that it does not spawn multiple threads randomly.
+export OMP_NUM_THREADS={self.n_cores}
+export MKL_NUM_THREADS={self.n_cores}
+export OPENBLAS_NUM_THREADS={self.n_cores}
+export NUMEXPR_NUM_THREADS={self.n_cores}
 # Force stdout/stderr to be unbuffered
 exec 1> >(tee -a {out_file})
 exec 2> >(tee -a {err_file})
@@ -961,7 +987,7 @@ exit $exit_code
         if observe:
             self.job_observer = JobObserver(self.active_jobs, self.job_type, self.unique_log_dir, self.task_id)
             self.job_observer.wait_for_jobs()
-            self.active_jobs, self.finished_jobs, self.failed_jobs = self.check_jobs_status()
+            _, self.finished_jobs, self.failed_jobs = self.check_jobs_status()
 
         self.save()
 
@@ -972,14 +998,13 @@ def load_and_execute(args):
     Parameters
     ----------
     args : list[str]
-        A list of arguments. The first argument is the path to the callable. The second argument is the path to the data. The third argument is the max number of retries.  The fourth argument is the scale of the random sleep.
+        A list of arguments. The first argument is the path to the callable. The second argument is the path to the data. The third argument is the max number of retries.
     """
     retries = int(args[2])
-    scale = float(args[3])
     for i in range(retries + 1):
         # Sleep for a random amount of time.
         # Try to avoid some async access issues.
-        time.sleep(random.uniform(0, scale))
+        time.sleep(random.uniform(0, 0.1))
         try:
             Output.print(Messages.LOADING_CALLABLE, path=args[0])
             with open(args[0], "rb") as executable_path:

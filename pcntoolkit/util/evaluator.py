@@ -3,7 +3,7 @@ from typing import List, Tuple
 import numpy as np
 import xarray as xr
 from scipy import stats  # type: ignore
-from sklearn.metrics import explained_variance_score, r2_score
+from sklearn.metrics import explained_variance_score, r2_score,mean_absolute_percentage_error
 
 from pcntoolkit.dataio.norm_data import NormData
 
@@ -170,6 +170,8 @@ class Evaluator:
 
         MSLL compares the log loss of the model to that of a simple baseline predictor
         that always predicts the mean of the training data.
+
+        MSLL = MLL_model - MLL_null
 
         Parameters
         ----------
@@ -356,12 +358,20 @@ class Evaluator:
         float
             Mean standardized log loss between actual and predicted values
         """
-        pred_log_prob = data["logp"].values
-        sample_mean = np.mean(data["Y"].values)
-        sample_std = np.std(data["Y"].values)  # For some reason, scipy normal distribution uses std instead of var
-        naive_logp = stats.norm.logpdf(data["Y"].values, sample_mean, sample_std)  # ¯\_(ツ)_/¯
-        msll = np.mean(pred_log_prob - naive_logp)
-        return float(msll)
+        logp = data["logp"].values
+        y = data["Y"].values
+        
+        # model mean log loss (negative log-likelihood)
+        mll_model = -np.mean(logp)
+
+        # baseline: Gaussian with mean and std of y_true
+        mu_null = np.mean(y)
+        sigma_null = np.std(y)
+        null_logp = -0.5 * np.log(2 * np.pi * sigma_null**2) - ((y - mu_null)**2) / (2 * sigma_null**2)
+        mll_null = -np.mean(null_logp)
+
+        # standardized
+        return mll_model - mll_null
 
     def _evaluate_nll(self, data: NormData) -> float:
         """
@@ -439,8 +449,9 @@ class Evaluator:
         """
         y = data["Y"].values
         yhat = data["Yhat"].values
-        mape = np.abs((y - yhat) / y).mean()
-        return float(mape)
+
+        return mean_absolute_percentage_error(y, yhat)
+
 
     def empty_statistic(self) -> xr.DataArray:
         return xr.DataArray(
