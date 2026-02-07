@@ -215,7 +215,7 @@ class WarpLog(WarpBase):
         Parameters
         ----------
         x : NDArray[np.float64]
-            Input values
+            Input values (must be strictly positive)
         params : Optional[NDArray[np.float64]], optional
             Not used for logarithmic warp, by default None
 
@@ -223,7 +223,19 @@ class WarpLog(WarpBase):
         -------
         NDArray[np.float64]
             log(x)
+
+        Raises
+        ------
+        ValueError
+            If input contains zero or negative values
         """
+        if np.any(x <= 0):
+            raise ValueError(
+                "WarpLog requires all input values to be strictly positive (> 0). "
+                "Your data contains zero or negative values. Consider:\n"
+                "  1. Using WarpBoxCox or WarpSinhArcsinh which handle negative values\n"
+                "  2. Setting outscaler=None if using WarpLog (warp is applied after scaling)"
+            )
         return np.log(x)
 
     def invf(self, y: NDArray[np.float64], param: Optional[NDArray[np.float64]] = None) -> NDArray[np.float64]:
