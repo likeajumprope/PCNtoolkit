@@ -72,6 +72,10 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 .. note::
     **Alternative quicker option:** To simplify and automate commands that are frequently used during development, we use `GNU Make <https://www.gnu.org/software/make/>`_. Common development tasks are defined as short scripts in the ``Makefile``. For example, steps 3 and 4 can be done with a single command: ``make dev-setup``. After it, you should activate the environment with ``conda activate .ptk-dev``.
 
+Congrats! You have now set up your development environment. 
+
+To contribute, create a new branch based on the ``dev`` branch and open your pull request. Your pull request should be approved by at least one developer before merging. The ``dev`` branch is where we add changes for the next release and once we are ready to release to the public we move all our code to the ``master`` branch.
+
 Running Tests
 -------------
 
