@@ -61,6 +61,9 @@ normative = "pcntoolkit.normative:entrypoint"
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = ["pcntoolkit"]
+
 [tool.ruff]
 exclude = [
     ".bzr", ".direnv", ".eggs", ".git", ".git-rewrite", ".github", ".hg",
