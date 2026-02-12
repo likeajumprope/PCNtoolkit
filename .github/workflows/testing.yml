@@ -29,8 +29,9 @@ jobs:
         python-version: '3.12'
 
     - name: Install Dependencies
-      run: | 
+      run: | # Install the project dependencies, including pytest-html for generating test reports in the next steps.
         pip install -e ".[dev]"
+        pip install pytest-html 
 
     - name: Run Tests with coverage and save report
       run: |
