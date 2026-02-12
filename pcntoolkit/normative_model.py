@@ -54,6 +54,13 @@ class NormativeModel:
         Input (X/covariates) scaler to use.
     outscaler: str
         Output (Y/response_vars) scaler to use.
+    y_transform : str or None
+        Optional transform applied to Y before fitting and inverted
+        after prediction. Currently supported: ``"log"`` applies
+        log(Y+1) before fitting and then inverts centiles of the resulting 
+        model back in the original space.
+        This is useful for phenotypes that cannot be negative.
+        Default is ``None`` (no transform).
     name: str
         Name of the model
     """
@@ -68,6 +75,7 @@ class NormativeModel:
         save_dir: Optional[str] = None,
         inscaler: str = "standardize",
         outscaler: str = "standardize",
+        y_transform: Optional[str] = None,
         name: Optional[str] = None,
     ):
         self.savemodel: bool = savemodel
@@ -77,6 +85,7 @@ class NormativeModel:
         self._save_dir = save_dir if save_dir is not None else get_default_save_dir()
         self.inscaler: str = inscaler
         self.outscaler: str = outscaler
+        self.y_transform: Optional[str] = y_transform
         self.name: Optional[str] = name
         self.response_vars: list[str] = None  # type: ignore
         self.template_regression_model: RegressionModel = template_regression_model
@@ -180,6 +189,7 @@ class NormativeModel:
             saveplots=True,
             inscaler=self.inscaler,
             outscaler=self.outscaler,
+            y_transform=self.y_transform,
             save_dir=self.save_dir,
         )
         if save_dir is not None:
@@ -239,6 +249,7 @@ class NormativeModel:
             saveplots=True,
             inscaler=self.inscaler,
             outscaler=self.outscaler,
+            y_transform=self.y_transform,
             save_dir=save_dir,
         )
 
@@ -459,6 +470,7 @@ class NormativeModel:
         outscaler = metadata["outscaler"]
         saveplots = metadata["saveplots"]
         evaluate_model = metadata["evaluate_model"]
+        y_transform = metadata.get("y_transform", None)
         name = metadata["name"]
 
         response_vars = []
@@ -491,6 +503,7 @@ class NormativeModel:
                 save_dir=save_dir,
                 inscaler=inscaler,
                 outscaler=outscaler,
+                y_transform=y_transform,
                 name=name,
             )
         else:
@@ -548,9 +561,13 @@ class NormativeModel:
         """
         Applies preprocessing transformations to the input data.
 
+        First applies an optional response transform (e.g. log1p), then scales.
+
         Args:
             data (NormData): Data to preprocess.
         """
+        # Enforce positivity if necessary
+        self._apply_y_transform(data)
         self.scale_forward(data)
 
     def scale_forward(self, data: NormData, overwrite: bool = False) -> None:
@@ -585,10 +602,15 @@ class NormativeModel:
     def postprocess(self, data: NormData) -> None:
         """Apply postprocessing to the data.
 
+        First unscales, then applies the inverse response transform (e.g. expm1).
+
         Args:
             data (NormData): Data to postprocess.
         """
         self.scale_backward(data)
+        # Invert Y to its original space if positivity was enforced during 
+        # preprocessing
+        self._invert_y_transform(data)
 
     def scale_backward(self, data: NormData) -> None:
         """
@@ -605,6 +627,59 @@ class NormativeModel:
         """
         data.scale_backward(self.inscalers, self.outscalers)
 
+    def _apply_y_transform(self, data: NormData) -> None:
+        """
+        Apply the forward response transform (e.g. log1p) to Y-like variables 
+        in the data.
+        
+        Parameters
+        ----------
+        data : NormData
+            Data object containing response variable arrays (Y, Yhat, 
+            centiles, thrive_Y) to which the transform should be applied.
+        
+        """
+        if self.y_transform is None:
+            return
+        
+                
+        # TODO: Check if we need to track if transform has already been 
+        # applied to avoid double-inverting. Normally I dont expect any issues 
+        # as every process() is followed by a postprocess(). The only issues can
+        # be if users call postprocess() multiple times manually or with
+        # compute_thrivelines() that has a preprocess() call without a postprocess().
+            
+        if self.y_transform == "log1p":
+            # Apply transform to all Y-like input variables
+            for var in "Y":
+                if var in data.data_vars:
+                    data[var] = np.log1p(data[var])
+
+    def _invert_y_transform(self, data: NormData) -> None:
+        """
+        Apply the inverse response transform (e.g. expm1) to Y-like variables
+        in the data.
+        
+        Parameters
+        ----------
+        data : NormData
+            Data object containing response variable arrays (Y, Yhat,
+            centiles, thrive_Y) to which the inverse transform should be applied.
+        """
+        if self.y_transform is None:
+            return
+        
+        # TODO: Check if we need to track if inverse transform has already been 
+        # applied to avoid double-inverting. Normally I dont expect any issues 
+        # as every process() is followed by a postprocess(). The only issues can
+        # be if users call postprocess() multiple times manually or with
+        # compute_thrivelines() that has a preprocess() call without a postprocess().
+            
+        if self.y_transform == "log1p":
+            for var in ("Y", "centiles", "Yhat", "Y_harmonized", "thrive_Y"):
+                if var in data.data_vars:
+                    data[var] = np.expm1(data[var])
+            
     def evaluate(self, data: NormData) -> None:
         """
         Evaluates the model performance on the data.
@@ -927,6 +1002,7 @@ class NormativeModel:
             "is_fitted": self.is_fitted,
             "inscaler": self.inscaler,
             "outscaler": self.outscaler,
+            "y_transform": self.y_transform,
             "ptk_version": importlib.metadata.version("pcntoolkit"),
         }
 
@@ -986,6 +1062,7 @@ class NormativeModel:
         inscaler = kwargs.get("inscaler", "none")
         outscaler = kwargs.get("outscaler", "none")
         name = kwargs.get("name", None)
+        y_transform = kwargs.get("y_transform", None)
         assert "alg" in kwargs, "Algorithm must be specified"
         if kwargs["alg"] == "blr":
             template_regression_model = BLR.from_args("template", kwargs)
@@ -1004,6 +1081,7 @@ class NormativeModel:
             save_dir=save_dir,
             inscaler=inscaler,
             outscaler=outscaler,
+            y_transform=y_transform,
             name=name,
         )
 
