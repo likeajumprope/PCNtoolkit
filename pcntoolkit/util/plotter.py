@@ -337,12 +337,14 @@ def plot_centiles_advanced(
     centile_covariates = np.linspace(covariate_ranges[covariate][0], covariate_ranges[covariate][1], 150)
     centile_df = pd.DataFrame({covariate: centile_covariates})
 
-    # TODO: use the mean here
-    # Any other covariates are taken to be the midpoint between the observed min and max
+    # Any other covariates are taken to be the mean of the scatter data, or the midpoint of the covariate range
     for cov in model.covariates:
         if cov != covariate:
             minc, maxc = covariate_ranges[cov]
-            centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
+            if scatter_data is not None:
+                centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
+            else:
+                centile_df[cov] = (minc + maxc) / 2
 
     # Batch effects are the first ones in the highlighted batch effects
     for be, v in batch_effects.items():
@@ -570,6 +572,7 @@ def _plot_centiles_advanced(
                 plt.legend().remove()
 
     title = f"Centiles of {response_var}"
+    plotname = f"centiles_{response_var}"
     if scatter_data:
         if harmonize_data:
             plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
