@@ -11,7 +11,6 @@ is used by all the models in the toolkit.
 from __future__ import annotations
 
 import copy
-import fcntl
 import json
 import os
 from collections import defaultdict
@@ -42,6 +41,8 @@ from sklearn.model_selection import StratifiedKFold, train_test_split  # type: i
 
 # import datavars from xarray
 from xarray.core.types import DataVars
+
+from filelock import FileLock
 
 from pcntoolkit.dataio.fileio import load
 from pcntoolkit.util.output import Messages, Output, Warnings
@@ -1124,9 +1125,9 @@ class NormData(xr.Dataset):
         zdf = zdf[["subject_ids", *[z for z in sorted(zdf.columns.tolist()) if z not in ["subject_ids"]]]]
         zdf.index = zdf.index.astype(str)
         res_path = os.path.join(save_dir, f"Z_{self.name}.csv")
-        with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
-            try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        lock_path = res_path + ".lock"
+        with FileLock(lock_path):
+            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1152,8 +1153,6 @@ class NormData(xr.Dataset):
                     )
                     new_results.index = new_results.index.astype(str)
                 new_results.to_csv(f)
-            finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def load_zscores(self, save_dir) -> None:
         Z_path = os.path.join(save_dir, f"Z_{self.name}.csv")
@@ -1180,9 +1179,9 @@ class NormData(xr.Dataset):
         centiles = centiles.merge(subject_ids, on=["observations", "centile"], how="left")
         centiles = centiles[["subject_ids", *[z for z in sorted(centiles.columns.tolist()) if z not in ["subject_ids"]]]]
         res_path = os.path.join(save_dir, f"centiles_{self.name}.csv")
-        with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
-            try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        lock_path = res_path + ".lock"
+        with FileLock(lock_path):
+            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1208,8 +1207,6 @@ class NormData(xr.Dataset):
                     )
                     # new_results.index = new_results.index.astype(str)
                 new_results.to_csv(f)
-            finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def load_centiles(self, save_dir) -> None:
         C_path = os.path.join(save_dir, f"centiles_{self.name}.csv")
@@ -1239,9 +1236,9 @@ class NormData(xr.Dataset):
         logp = logp[["subject_ids", *[z for z in sorted(logp.columns.tolist()) if z not in ["subject_ids"]]]]
         logp.index = logp.index.astype(str)
         res_path = os.path.join(save_dir, f"logp_{self.name}.csv")
-        with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
-            try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        lock_path = res_path + ".lock"
+        with FileLock(lock_path):
+            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1267,8 +1264,6 @@ class NormData(xr.Dataset):
                     )
                     new_results.index = new_results.index.astype(str)
                 new_results.to_csv(f)
-            finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def load_logp(self, save_dir) -> None:
         logp_path = os.path.join(save_dir, f"logp_{self.name}.csv")
@@ -1285,9 +1280,9 @@ class NormData(xr.Dataset):
         mdf = self.statistics.to_dataframe().unstack(level="response_vars")
         mdf.columns = mdf.columns.droplevel(0)
         res_path = os.path.join(save_dir, f"statistics_{self.name}.csv")
-        with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
-            try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        lock_path = res_path + ".lock"
+        with FileLock(lock_path):
+            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f, index_col=0) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1300,8 +1295,6 @@ class NormData(xr.Dataset):
                 f.seek(0)
                 f.truncate()
                 new_results.to_csv(f)
-            finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def load_statistics(self, save_dir) -> None:
         logp_path = os.path.join(save_dir, f"statistics_{self.name}.csv")
