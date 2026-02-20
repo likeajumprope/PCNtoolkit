@@ -187,6 +187,10 @@ class BLR(RegressionModel):
         hyp0 = self.init_hyp()
         args = (Phi, np_Y, Phi_var)
 
+        if self.warp and self.optimizer.lower() == "cg":
+            Output.warning(Warnings.BLR_CG_NOT_SUPPORTED_WITH_WARP)
+            self.optimizer = "l-bfgs-b"
+
         match self.optimizer.lower():
             case "cg":
                 out = optimize.fmin_cg(

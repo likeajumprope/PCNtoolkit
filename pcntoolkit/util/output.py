@@ -136,7 +136,11 @@ class Warnings:
     LOADING_DATA_NOT_SUPPORTED_FOR_CROSS_VALIDATION = (
         "Automatic data loading by the Runner is not supported for cross-validation."
     )
-
+    BLR_CG_NOT_SUPPORTED_WITH_WARP = (
+        "The 'cg' optimizer requires analytical gradients, which are not implemented for warped models. "
+        "Falling back to the default 'l-bfgs-b' optimizer. "
+        "Please set optimizer='l-bfgs-b' to avoid this warning."
+    )
 
 class Errors:
     ERROR_BATCH_SIZE_AND_N_BATCHES_MISMATCH = "Batch size ({batch_size}) and number of batches ({n_batches}) are both specified, but do not match the number of response variables ({n_response_vars})"
