@@ -46,7 +46,7 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 .. note::
     To use PCNtoolkit you need to have installed `Git <https://git-scm.com/downloads>`_ and a Python version higher than 3.9 and lower than 3.13. Also, we recommend using `Anaconda <https://www.anaconda.com/download>`_ to manage Python.
 
-1. **Fork the repository** - Forking is the process of creating your own personal copy of the project on GitHub. The fork lives under your GitHub account and lets you experiment, make changes, or contribute improvements without affecting the original project. See `GitHub’s guide to forking <https://docs.github.com/en/get-started/quickstart/fork-a-repo>`_.
+1. **Fork the repository** - Forking creates your own copy (your "fork") of PCNtoolkit on your GitHub. This gives you full write access to your fork so you can make changes and then submit Pull Requests to the original PCNtoolkit repository (that you don't have direct write access to). See `GitHub’s guide to forking <https://docs.github.com/en/get-started/quickstart/fork-a-repo>`_.
 
 2. **Clone your fork** - Cloning is the process of downloading your GitHub copy of the project onto your computer, so you can make changes to the code locally:
 
