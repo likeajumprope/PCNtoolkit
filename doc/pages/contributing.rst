@@ -54,12 +54,12 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 
        git clone https://github.com/your-username/PCNtoolkit.git
 
-3. **Create environment** - A Python environment is an isolated workspace that contains its own Python installation and libraries. This prevents conflicts with other Python projects on your system. Here, we create an environment called ``.ptk-dev`` and then activate it.
+3. **Create environment** - A Python environment is an isolated workspace that contains its own Python installation and libraries. This prevents conflicts with other Python projects on your system. Here, we create an environment called ``ptk-dev`` and then activate it.
 
    .. code-block:: bash
 
-       conda create -n .ptk-dev
-       conda activate .ptk-dev
+       conda create -n ptk-dev
+       conda activate ptk-dev
 
 4. **Install the dependencies** 
 
@@ -70,7 +70,7 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
    The idea behind ``pip install -e`` is to make it easy to work on the code while you are developing it. Instead of treating the project as a finished product, Python treats it as “live” code, so you can edit it and test your changes right away. Also, ``".[dev]"`` lets you install extra dependencies that are useful when developing the project (for example for testing, or documentation).
 
 .. note::
-    **Alternative quicker option:** To simplify and automate commands that are frequently used during development, we use `GNU Make <https://www.gnu.org/software/make/>`_. Common development tasks are defined as short scripts in the ``Makefile``. For example, steps 3 and 4 can be done with a single command: ``make dev-setup``. After it, you should activate the environment with ``conda activate .ptk-dev``.
+    **Alternative quicker option:** To simplify and automate commands that are frequently used during development, we use `GNU Make <https://www.gnu.org/software/make/>`_. Common development tasks are defined as short scripts in the ``Makefile``. For example, steps 3 and 4 can be done with a single command: ``make dev-setup``. After it, you should activate the environment with ``conda activate ptk-dev``.
 
 Congrats! You have now set up your development environment. 
 

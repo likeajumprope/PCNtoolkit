@@ -141,8 +141,8 @@ house rules (style, commits), and avoid common pitfalls. When you create new cod
 
 - Initial setup
   ```bash
-  conda create -n .ptk-dev python=3.12 -y
-  conda activate .ptk-dev
+  conda create -n ptk-dev python=3.12 -y
+  conda activate ptk-dev
   # Windows only:
   conda install -c conda-forge m2w64-toolchain libpython
   pip install -e ".[dev]"

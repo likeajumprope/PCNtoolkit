@@ -1,4 +1,4 @@
-ENV_NAME = .ptk-dev
+ENV_NAME = ptk-dev
 
 .PHONY: dev-setup
 
