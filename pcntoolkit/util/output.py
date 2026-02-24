@@ -168,7 +168,11 @@ class Errors:
     BLR_X_NOT_PROVIDED = "X is not provided"
     ERROR_UNKNOWN_FUNCTION = "Unknown function {func}"
     ERROR_ARGUMENT_SPECIFIED_TWICE = "Argument {key} is specified twice."
-    ERROR_UNKNOWN_FUNCTION_FOR_CLASS = "Unknown function {func} for class {class_name}"
+    ERROR_BLR_CG_NOT_SUPPORTED_WITH_WARP = (
+        "The 'cg' optimizer requires analytical gradients, which are not "
+        "implemented for warped models. "
+        "Please set optimizer='l-bfgs-b' to avoid this error."
+    )
     BLR_ERROR_NO_DESIGN_MATRIX_CREATED = "No design matrix created"
     ERROR_UNKNOWN_CLASS = "Unknown class {class_name}"
     ERROR_FILE_NOT_FOUND = "File not found: {path}"

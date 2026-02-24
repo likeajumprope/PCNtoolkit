@@ -804,8 +804,10 @@ class BLR(RegressionModel):
         alpha, beta, gamma = self.parse_hyps(hyp, X, var_X)
 
         if self.warp:
+            # Analytical gradients (dloglik) are not implemented for warped
+            # models
             raise ValueError(
-                Output.error(Errors.ERROR_UNKNOWN_FUNCTION_FOR_CLASS, func="dloglik", class_name=self.__class__.__name__)
+                Output.error(Errors.ERROR_BLR_CG_NOT_SUPPORTED_WITH_WARP)
             )
 
         # load posterior and prior covariance
