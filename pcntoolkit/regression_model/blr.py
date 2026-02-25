@@ -689,9 +689,9 @@ class BLR(RegressionModel):
         # Compute the posterior precision matrix A
         XtLambda_n = X.T * self.lambda_n_vec
         self.A = XtLambda_n.dot(X) + self.Lambda_a
-        # Add a small value to the diagonal of A to ensure that inv(A) can be
-        # computed when the optimizer estimates extreme hyperparameter values
-        # (i.e., close to 0 or infinity).
+        # Add a small value to the diagonal of A to ensure that inverse of A
+        # can be computed when the optimizer estimates hyperparameter values
+        # close to 0
         self.A = self.A + 0.001 * np.eye(self.A.shape[0])
 
         # Compute the posterior mean m
