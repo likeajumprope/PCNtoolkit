@@ -136,7 +136,11 @@ class Warnings:
     LOADING_DATA_NOT_SUPPORTED_FOR_CROSS_VALIDATION = (
         "Automatic data loading by the Runner is not supported for cross-validation."
     )
-
+    BLR_CG_NOT_SUPPORTED_WITH_WARP = (
+        "The 'cg' optimizer requires analytical gradients, which are not implemented for warped models. "
+        "Falling back to the default 'l-bfgs-b' optimizer. "
+        "Please set optimizer='l-bfgs-b' to avoid this warning."
+    )
 
 class Errors:
     ERROR_BATCH_SIZE_AND_N_BATCHES_MISMATCH = "Batch size ({batch_size}) and number of batches ({n_batches}) are both specified, but do not match the number of response variables ({n_response_vars})"
@@ -164,7 +168,11 @@ class Errors:
     BLR_X_NOT_PROVIDED = "X is not provided"
     ERROR_UNKNOWN_FUNCTION = "Unknown function {func}"
     ERROR_ARGUMENT_SPECIFIED_TWICE = "Argument {key} is specified twice."
-    ERROR_UNKNOWN_FUNCTION_FOR_CLASS = "Unknown function {func} for class {class_name}"
+    ERROR_BLR_CG_NOT_SUPPORTED_WITH_WARP = (
+        "The 'cg' optimizer requires analytical gradients, which are not "
+        "implemented for warped models. "
+        "Please set optimizer='l-bfgs-b' to avoid this error."
+    )
     BLR_ERROR_NO_DESIGN_MATRIX_CREATED = "No design matrix created"
     ERROR_UNKNOWN_CLASS = "Unknown class {class_name}"
     ERROR_FILE_NOT_FOUND = "File not found: {path}"
