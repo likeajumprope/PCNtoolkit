@@ -295,3 +295,55 @@ def test_blr_model_to_and_from_dict_and_args(blr_model_args: dict, norm_data_fro
     assert model1.l_bfgs_b_norm == "l2"
     assert model1.fixed_effect
     assert not model1.fixed_effect_var
+
+
+def test_001_log_transform_centiles_should_beNonNegative(
+    norm_test_model_with_log_transform: NormativeModel,
+    positive_norm_data: NormData,
+    positive_test_norm_data: NormData,
+) -> None:
+    """Centiles must be >= 0 after log1p round-trip.
+
+    Extreme lower-tail centiles may be clipped to exactly 0
+    by the positivity enforcement, so we check >= 0.
+    """
+    # Arrange – fit the model, then predict on test data
+    norm_test_model_with_log_transform.fit_predict(
+        positive_norm_data, positive_test_norm_data
+    )
+    # Assert – every centile in the back-transformed space >= 0
+    assert bool(
+        np.all(positive_test_norm_data["centiles"].values >= 0)
+    )
+
+
+def test_002_log_transform_yhat_should_bePositive(
+    norm_test_model_with_log_transform: NormativeModel,
+    positive_norm_data: NormData,
+    positive_test_norm_data: NormData,
+) -> None:
+    """Yhat must be > 0 after log1p round-trip."""
+    # Arrange – fit the model, then predict on test data
+    norm_test_model_with_log_transform.fit_predict(
+        positive_norm_data, positive_test_norm_data
+    )
+    # Assert – every Yhat in the back-transformed space > 0
+    assert bool(
+        np.all(positive_test_norm_data["Yhat"].values > 0)
+    )
+
+
+def test_003_log_transform_Y_should_bePositive(
+    norm_test_model_with_log_transform: NormativeModel,
+    positive_norm_data: NormData,
+    positive_test_norm_data: NormData,
+) -> None:
+    """Y must remain > 0 after the log1p round-trip."""
+    # Arrange – fit the model, then predict on test data
+    norm_test_model_with_log_transform.fit_predict(
+        positive_norm_data, positive_test_norm_data
+    )
+    # Assert – every Y value after the round-trip is > 0
+    assert bool(
+        np.all(positive_test_norm_data["Y"].values > 0)
+    )
