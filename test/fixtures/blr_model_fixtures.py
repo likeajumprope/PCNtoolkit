@@ -1,3 +1,5 @@
+from math import log
+
 import pytest
 
 from pcntoolkit.dataio.norm_data import NormData
@@ -6,6 +8,7 @@ from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import BLR
 from test.fixtures.norm_data_fixtures import *
 from test.fixtures.path_fixtures import *
+import os
 
 
 @pytest.fixture
@@ -69,3 +72,37 @@ def fitted_norm_blr_model(new_norm_blr_model: NormativeModel, norm_data_from_arr
     os.makedirs(new_norm_blr_model.save_dir, exist_ok=True)
     new_norm_blr_model.fit(norm_data_from_arrays)
     return new_norm_blr_model
+
+
+@pytest.fixture
+def norm_blr_model_with_log_transform(
+    save_dir_test_model: str
+) -> NormativeModel:
+    """Create a NormativeModel using BLR with log1p.
+
+    Returns
+    -------
+    NormativeModel
+        Un-fitted normative model with log1p transform.
+    """
+    # Build a fresh save directory
+    log_dir = os.path.join(save_dir_test_model, "log1p")
+    if os.path.exists(log_dir):
+        shutil.rmtree(log_dir)
+    os.makedirs(log_dir, exist_ok=True)
+    # Create  test regression model
+    test_model = BLR("name=test_model_log1p")
+    # Return a NormativeModel with the log1p transform
+    return NormativeModel(
+        template_regression_model=test_model,
+        savemodel=False,
+        saveresults=False,
+        evaluate_model=False,
+        saveplots=True,
+        save_dir=log_dir,
+        inscaler="standardize",
+        outscaler="standardize",
+        name="test_model_log1p",
+        y_transform=None,
+    )
+
