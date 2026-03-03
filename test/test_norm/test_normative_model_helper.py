@@ -9,7 +9,6 @@ from pcntoolkit.math_functions.prior import *
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import *
 from pcntoolkit.regression_model.hbr import *
-from test import test_norm
 from test.fixtures.blr_model_fixtures import *
 from test.fixtures.data_fixtures import *
 from test.fixtures.norm_data_fixtures import *
@@ -297,6 +296,7 @@ def test_blr_model_to_and_from_dict_and_args(blr_model_args: dict, norm_data_fro
     assert model1.fixed_effect
     assert not model1.fixed_effect_var
 
+
 def test_log_transformed_centiles(
     norm_blr_model_with_log_transform: NormativeModel,
     norm_data_from_arrays: NormData,
@@ -317,7 +317,6 @@ def test_log_transformed_centiles(
     assert bool(
         np.all(test_norm_data_from_arrays["centiles"].values > -1)
     )
-
 
 
 def test_log_transformed_yhat(
