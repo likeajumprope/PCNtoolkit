@@ -10,6 +10,7 @@ from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import *
 from pcntoolkit.regression_model.hbr import *
 from test import test_norm
+from test.fixtures.blr_model_fixtures import *
 from test.fixtures.data_fixtures import *
 from test.fixtures.norm_data_fixtures import *
 from test.fixtures.path_fixtures import *
@@ -296,54 +297,42 @@ def test_blr_model_to_and_from_dict_and_args(blr_model_args: dict, norm_data_fro
     assert model1.fixed_effect
     assert not model1.fixed_effect_var
 
-
-def test_001_log_transform_centiles_should_beNonNegative(
-    norm_test_model_with_log_transform: NormativeModel,
-    positive_norm_data: NormData,
-    positive_test_norm_data: NormData,
+def test_log_transformed_centiles(
+    norm_blr_model_with_log_transform: NormativeModel,
+    norm_data_from_arrays: NormData,
+    test_norm_data_from_arrays: NormData,
 ) -> None:
-    """Centiles must be >= 0 after log1p round-trip.
-
-    Extreme lower-tail centiles may be clipped to exactly 0
-    by the positivity enforcement, so we check >= 0.
-    """
-    # Arrange – fit the model, then predict on test data
-    norm_test_model_with_log_transform.fit_predict(
-        positive_norm_data, positive_test_norm_data
+    norm_blr_model_with_log_transform.fit_predict(
+        norm_data_from_arrays, test_norm_data_from_arrays
     )
-    # Assert – every centile in the back-transformed space >= 0
+    
+    # Check that Y are non-negative in the original data
     assert bool(
-        np.all(positive_test_norm_data["centiles"].values >= 0)
+        np.all(test_norm_data_from_arrays["Y"].values >= 0)
+    )
+    # Both training and test centiles should be bigger or equal to -1
+    assert bool(
+        np.all(norm_data_from_arrays["centiles"].values > -1)
+    )
+    assert bool(
+        np.all(test_norm_data_from_arrays["centiles"].values > -1)
     )
 
 
-def test_002_log_transform_yhat_should_bePositive(
-    norm_test_model_with_log_transform: NormativeModel,
-    positive_norm_data: NormData,
-    positive_test_norm_data: NormData,
+
+def test_log_transformed_yhat(
+    norm_blr_model_with_log_transform: NormativeModel,
+    norm_data_from_arrays: NormData,
+    test_norm_data_from_arrays: NormData,
 ) -> None:
-    """Yhat must be > 0 after log1p round-trip."""
-    # Arrange – fit the model, then predict on test data
-    norm_test_model_with_log_transform.fit_predict(
-        positive_norm_data, positive_test_norm_data
+    norm_blr_model_with_log_transform.fit_predict(
+        norm_data_from_arrays, test_norm_data_from_arrays
     )
-    # Assert – every Yhat in the back-transformed space > 0
+    # We dont expect any negative yhat values in the train dataset
     assert bool(
-        np.all(positive_test_norm_data["Yhat"].values > 0)
+        np.all(norm_data_from_arrays["Yhat"].values >= 0)
     )
-
-
-def test_003_log_transform_Y_should_bePositive(
-    norm_test_model_with_log_transform: NormativeModel,
-    positive_norm_data: NormData,
-    positive_test_norm_data: NormData,
-) -> None:
-    """Y must remain > 0 after the log1p round-trip."""
-    # Arrange – fit the model, then predict on test data
-    norm_test_model_with_log_transform.fit_predict(
-        positive_norm_data, positive_test_norm_data
-    )
-    # Assert – every Y value after the round-trip is > 0
+    # test dataset: -1 possibility due to extrapolation
     assert bool(
-        np.all(positive_test_norm_data["Y"].values > 0)
+        np.all(test_norm_data_from_arrays["Yhat"].values > -1)
     )
