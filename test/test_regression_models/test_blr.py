@@ -68,3 +68,24 @@ def test_parse_hyps(norm_data_from_arrays: NormData):
     hyp = blr.init_hyp()
     alpha, beta, gamma = blr.parse_hyps(hyp, X, var_X)
     assert True
+
+
+def test_cg_ard_fit(norm_data_from_arrays: NormData, fitted_norm_blr_model: NormativeModel):
+    """Test that CG optimizer with ARD (non-heteroskedastic) fits successfully."""
+    from pcntoolkit.math_functions.basis_function import BsplineBasisFunction
+
+    blr_cg = BLR(
+        "test_blr_cg_ard",
+        n_iter=100,
+        tol=1e-3,
+        ard=True,
+        optimizer="cg",
+        fixed_effect=True,
+        basis_function_mean=BsplineBasisFunction(basis_column=0, degree=3, nknots=5),
+    )
+    response_var = norm_data_from_arrays.response_vars[0]
+    X, be, be_maps, Y, _ = fitted_norm_blr_model.extract_data(
+        norm_data_from_arrays.sel(response_vars=response_var)
+    )
+    blr_cg.fit(X, be, be_maps, Y)
+    assert blr_cg.is_fitted
