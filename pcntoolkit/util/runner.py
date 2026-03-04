@@ -111,10 +111,8 @@ class Runner:
             if not environment:
                 raise ValueError(Output.error(Errors.ERROR_NO_ENVIRONMENT_SPECIFIED))
             else:
-                # Check if the environment is valid (supports both Unix and Windows layouts)
-                unix_python = os.path.join(environment, "bin", "python")
-                win_python = os.path.join(environment, "Scripts", "python.exe")
-                if not (os.path.exists(unix_python) or os.path.exists(win_python)):
+                # Check if the environment is valid
+                if not os.path.exists(os.path.join(environment, "bin", "python")):
                     raise ValueError(Output.error(Errors.INVALID_ENVIRONMENT, environment=environment))
                 else:
                     self.environment = environment
@@ -172,7 +170,7 @@ class Runner:
             unique_id = unique_id + data.name + "_"
         milliseconds = time.time() * 1000 % 1000
         milliseconds = f"{milliseconds:03f}"
-        self.task_id = unique_id + "_" + time.strftime("%Y-%m-%d_%H-%M-%S") + "_" + milliseconds
+        self.task_id = unique_id + "_" + time.strftime("%Y-%m-%d_%H:%M:%S") + "_" + milliseconds
         Output.print(Messages.TASK_ID_CREATED, task_id=self.task_id)
 
     def create_temp_and_log_dir(self):
