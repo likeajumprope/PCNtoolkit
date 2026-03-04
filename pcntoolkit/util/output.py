@@ -147,7 +147,7 @@ class Errors:
     ERROR_ENVIRONMENT_NOT_FOUND = (
         "Environment {environment} not found. Please specify the path to the python environment using the environment keyword."
     )
-    INVALID_ENVIRONMENT = "The python environment {environment} is invalid because it has no Python executable (bin/python on Unix or Scripts/python.exe on Windows). Please specify a valid python environment."
+    INVALID_ENVIRONMENT = "The python environment {environment} is invalid because it has no /bin/python file. Please specify a valid python environment."
     SAMPLE_BATCH_EFFECTS = (
         "Cannot sample {n_samples} batch effects, because some batch effects have more levels than the number of samples."
     )
