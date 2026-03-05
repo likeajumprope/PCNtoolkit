@@ -101,9 +101,10 @@ def plot_centiles(
     # Batch effects are the first ones in the highlighted batch effects
     for be, v in batch_effects.items():
         centile_df[be] = v
-    # Response vars are all 0, we don't need them
+    # Assign random values for response vars because they are not needed.
+    # They must be > 0 to satisfy later checks that require response_vars > 0.
     for rv in response_vars:
-        centile_df[rv] = 0
+        centile_df[rv] = 1e-6
 
     centile_data = NormData.from_dataframe(
         "centile",
@@ -352,9 +353,10 @@ def plot_centiles_advanced(
     # Batch effects are the first ones in the highlighted batch effects
     for be, v in batch_effects.items():
         centile_df[be] = v[0]
-    # Response vars are all 0, we don't need them
+    # Assign random values for response vars because they are not needed.
+    # They must be > 0 to satisfy later checks that require response_vars > 0.
     for rv in model.response_vars:
-        centile_df[rv] = 0
+        centile_df[rv] = 1e-6
     centile_data = NormData.from_dataframe(
         "centile",
         dataframe=centile_df,
