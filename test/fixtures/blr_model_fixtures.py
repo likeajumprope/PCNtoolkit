@@ -117,7 +117,7 @@ def fitted_norm_blr_model(norm_blr_model: NormativeModel,
 
 
 @pytest.fixture
-def norm_blr_model_with_log_transform(
+def log_transform_norm_blr_model(
     save_dir_test_model: str
 ) -> NormativeModel:
     """Create a NormativeModel using BLR with log1p.

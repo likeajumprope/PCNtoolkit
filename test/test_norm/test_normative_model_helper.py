@@ -298,11 +298,11 @@ def test_blr_model_to_and_from_dict_and_args(blr_model_args: dict, norm_data_fro
 
 
 def test_log_transformed_centiles(
-    norm_blr_model_with_log_transform: NormativeModel,
+    log_transform_norm_blr_model: NormativeModel,
     norm_data_from_arrays: NormData,
     test_norm_data_from_arrays: NormData,
 ) -> None:
-    norm_blr_model_with_log_transform.fit_predict(
+    log_transform_norm_blr_model.fit_predict(
         norm_data_from_arrays, test_norm_data_from_arrays
     )
     
@@ -320,11 +320,11 @@ def test_log_transformed_centiles(
 
 
 def test_log_transformed_yhat(
-    norm_blr_model_with_log_transform: NormativeModel,
+    log_transform_norm_blr_model: NormativeModel,
     norm_data_from_arrays: NormData,
     test_norm_data_from_arrays: NormData,
 ) -> None:
-    norm_blr_model_with_log_transform.fit_predict(
+    log_transform_norm_blr_model.fit_predict(
         norm_data_from_arrays, test_norm_data_from_arrays
     )
     # We dont expect any negative yhat values in the train dataset
