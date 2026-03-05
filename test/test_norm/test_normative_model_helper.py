@@ -345,11 +345,34 @@ def test_log_transformed_centiles(
     log_transform_norm_blr_model.fit_predict(
         norm_data_from_arrays, test_norm_data_from_arrays
     )
-    # We dont expect any negative yhat values in the train dataset
+
+    # Check that Y are positive in the original data
     assert bool(
-        np.all(norm_data_from_arrays["Yhat"].values >= 0)
+        np.all(test_norm_data_from_arrays["Y"].values > 0)
     )
-    # test dataset: -1 possibility due to extrapolation
+    # Both training and test centiles should be bigger than 0 due to the exp(Y)
+    # transform
     assert bool(
-        np.all(test_norm_data_from_arrays["Yhat"].values > -1)
+        np.all(norm_data_from_arrays["centiles"].values > 0)
+    )
+    assert bool(
+        np.all(test_norm_data_from_arrays["centiles"].values > 0)
+    )
+
+
+def test_log_transformed_yhat(
+    log_transform_norm_blr_model: NormativeModel,
+    norm_data_from_arrays: NormData,
+    test_norm_data_from_arrays: NormData,
+) -> None:
+    log_transform_norm_blr_model.fit_predict(
+        norm_data_from_arrays, test_norm_data_from_arrays
+    )
+    
+    # We dont expect any negative yhat values in the train and test dataset
+    assert bool(
+        np.all(norm_data_from_arrays["Yhat"].values > 0)
+    )
+    assert bool(
+        np.all(test_norm_data_from_arrays["Yhat"].values > 0)
     )
