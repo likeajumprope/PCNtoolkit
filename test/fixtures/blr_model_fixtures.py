@@ -133,14 +133,14 @@ def log1p_transform_norm_blr_model(
         shutil.rmtree(log_dir)
     os.makedirs(log_dir, exist_ok=True)
     # Create  test regression model
-    test_model = BLR("test_model_log1p")
+    blr_model = BLR("test_model_log1p")
     # Return a NormativeModel with the log1p transform
     return NormativeModel(
-        template_regression_model=test_model,
+        template_regression_model=blr_model,
         savemodel=False,
         saveresults=False,
         evaluate_model=False,
-        saveplots=True,
+        saveplots=False,
         save_dir=log_dir,
         inscaler="standardize",
         outscaler="standardize",
@@ -151,7 +151,7 @@ def log1p_transform_norm_blr_model(
 
 @pytest.fixture
 def log_transform_norm_blr_model(
-    save_dir_blr: str,
+    save_dir_test_model: str,
 ) -> NormativeModel:
     """Create a NormativeModel using BLR with natural log y_transform.
 
@@ -161,20 +161,20 @@ def log_transform_norm_blr_model(
         Un-fitted normative model with natural-log transform.
     """
     # Build a fresh save directory for this fixture
-    log_dir = os.path.join(save_dir_blr, "log")
+    log_dir = os.path.join(save_dir_test_model, "log")
     if os.path.exists(log_dir):
         # Remove stale directory from previous test runs
         shutil.rmtree(log_dir)
     os.makedirs(log_dir, exist_ok=True)
     # Create a BLR regression model for the natural-log transform test
-    test_model = BLR("test_model_log")
+    blr_model = BLR("test_model_log")
     # Return NormativeModel with natural-log transform enabled
     return NormativeModel(
-        template_regression_model=test_model,
+        template_regression_model=blr_model,
         savemodel=False,
         saveresults=False,
         evaluate_model=False,
-        saveplots=True,
+        saveplots=False,
         save_dir=log_dir,
         inscaler="standardize",
         outscaler="standardize",

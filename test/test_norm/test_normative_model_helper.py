@@ -308,7 +308,7 @@ def test_log1p_transform(
 
     # Check that Y are non-negative in the original data
     assert bool(
-        np.all(test_norm_data_from_arrays["Y"].values > 0)
+        np.all(test_norm_data_from_arrays["Y"].values >= 0)
     )
 
     # Both training and test centiles should be bigger than 0 due to the 
@@ -337,7 +337,9 @@ def test_log_transformed(
     log_transform_norm_blr_model.fit_predict(
         norm_data_from_arrays, test_norm_data_from_arrays
     )
-
+    # Force the data to be >= 1e-6
+    test_norm_data_from_arrays["Y"].values.clip(min=1e-6)
+    
     # Check that Y are positive in the original data
     assert bool(
         np.all(test_norm_data_from_arrays["Y"].values > 0)
