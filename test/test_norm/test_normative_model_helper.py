@@ -334,12 +334,13 @@ def test_log_transformed(
     norm_data_from_arrays: NormData,
     test_norm_data_from_arrays: NormData,
 ) -> None:
+    # Force the data to be >= 1e-6
+    test_norm_data_from_arrays["Y"].values.clip(min=1e-6)
+
     log_transform_norm_blr_model.fit_predict(
         norm_data_from_arrays, test_norm_data_from_arrays
     )
-    # Force the data to be >= 1e-6
-    test_norm_data_from_arrays["Y"].values.clip(min=1e-6)
-    
+
     # Check that Y are positive in the original data
     assert bool(
         np.all(test_norm_data_from_arrays["Y"].values > 0)
