@@ -1,7 +1,6 @@
 import os
 import shutil
 
-import numpy as np
 import pytest
 
 from pcntoolkit.dataio.norm_data import NormData
