@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -259,8 +260,8 @@ def load_cifti(filename, vol=False, mask=None, rmtmp=True):
     Output.print(Messages.EXTRACTING_CIFTI_SURFACE_DATA, outstem=outstem)
     giinamel = outstem + "-left.func.gii"
     giinamer = outstem + "-right.func.gii"
-    os.system("wb_command -cifti-separate " + filename + " COLUMN -metric CORTEX_LEFT " + giinamel)
-    os.system("wb_command -cifti-separate " + filename + " COLUMN -metric CORTEX_RIGHT " + giinamer)
+    subprocess.run(["wb_command", "-cifti-separate", filename, "COLUMN", "-metric", "CORTEX_LEFT", giinamel], check=True)
+    subprocess.run(["wb_command", "-cifti-separate", filename, "COLUMN", "-metric", "CORTEX_RIGHT", giinamer], check=True)
 
     # load the surface data
     giil = nib.load(giinamel)
@@ -284,7 +285,7 @@ def load_cifti(filename, vol=False, mask=None, rmtmp=True):
     if vol:
         niiname = outstem + "-vol.nii"
         Output.print(Messages.EXTRACTING_CIFTI_VOLUME_DATA, niiname=niiname)
-        os.system("wb_command -cifti-separate " + filename + " COLUMN -volume-all " + niiname)
+        subprocess.run(["wb_command", "-cifti-separate", filename, "COLUMN", "-volume-all", niiname], check=True)
         vol = load_nifti(niiname, vol=True)
         volmask = create_mask(vol)
         out = np.concatenate((out, vol2vec(vol, volmask)), axis=0)
@@ -331,8 +332,8 @@ def save_cifti(data, filename, example, mask=None, vol=True, volatlas=None):
     estem = os.path.join(tempfile.gettempdir(), str(os.getpid()) + "-" + fstem)
     giiexnamel = estem + "-left.func.gii"
     giiexnamer = estem + "-right.func.gii"
-    os.system("wb_command -cifti-separate " + example + " COLUMN -metric CORTEX_LEFT " + giiexnamel)
-    os.system("wb_command -cifti-separate " + example + " COLUMN -metric CORTEX_RIGHT " + giiexnamer)
+    subprocess.run(["wb_command", "-cifti-separate", example, "COLUMN", "-metric", "CORTEX_LEFT", giiexnamel], check=True)
+    subprocess.run(["wb_command", "-cifti-separate", example, "COLUMN", "-metric", "CORTEX_RIGHT", giiexnamer], check=True)
 
     # write left hemisphere
     giiexl = nib.load(giiexnamel)
@@ -359,7 +360,7 @@ def save_cifti(data, filename, example, mask=None, vol=True, volatlas=None):
     # process volumetric data
     if vol:
         niiexname = estem + "-vol.nii"
-        os.system("wb_command -cifti-separate " + example + " COLUMN -volume-all " + niiexname)
+        subprocess.run(["wb_command", "-cifti-separate", example, "COLUMN", "-volume-all", niiexname], check=True)
         niivol = load_nifti(niiexname, vol=True)
         if mask is None:
             mask = create_mask(niivol)
@@ -373,17 +374,13 @@ def save_cifti(data, filename, example, mask=None, vol=True, volatlas=None):
 
     # write cifti
     fname = fstem + ".dtseries.nii"
-    os.system(
-        "wb_command -cifti-create-dense-timeseries "
-        + fname
-        + " -volume "
-        + fnamev
-        + " "
-        + volatlas
-        + " -left-metric "
-        + fnamel
-        + " -right-metric "
-        + fnamer
+    subprocess.run(
+        [
+            "wb_command", "-cifti-create-dense-timeseries",
+            fname, "-volume", fnamev, volatlas,
+            "-left-metric", fnamel, "-right-metric", fnamer,
+        ],
+        check=True,
     )
 
     # clean up

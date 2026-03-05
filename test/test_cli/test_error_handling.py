@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -46,6 +47,7 @@ class TestCLIErrorHandling:
         assert result.returncode != 0
         assert "File not found" in result.stderr
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not available on Windows")
     def test_permission_denied(self):
         """Test error handling for permission denied."""
         # Create a directory with no write permissions
