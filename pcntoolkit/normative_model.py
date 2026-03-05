@@ -651,12 +651,13 @@ class NormativeModel:
         # compute_thrivelines() that has a preprocess() call without a postprocess().
             
         if self.y_transform == "log1p":
-            # Apply transform to all Y-like input variables
-            for var in "Y":
+            # Apply log1p transform to the response variable Y
+            for var in ["Y"]:
                 if var in data.data_vars:
                     data[var] = np.log1p(data[var])
         elif self.y_transform == "log":
-            for var in "Y":
+            # Apply natural log transform to the response variable Y
+            for var in ["Y"]:
                 if var in data.data_vars:
                     data[var] = np.log(data[var])
 
