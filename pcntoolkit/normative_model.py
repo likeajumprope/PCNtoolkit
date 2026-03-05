@@ -56,9 +56,9 @@ class NormativeModel:
         Output (Y/response_vars) scaler to use.
     y_transform : str or None
         Optional transform applied to Y before fitting and inverted
-        after prediction. Currently supported: ``"log"`` applies
-        log(Y+1) before fitting and then inverts centiles of the resulting 
-        model back in the original space.
+        after prediction. Currently supported:
+        - ``"log1p"`` applies log(Y+1)
+        - ``"log"`` applies natural log(Y)
         This is useful for phenotypes that cannot be negative.
         Default is ``None`` (no transform).
     name: str
@@ -642,8 +642,7 @@ class NormativeModel:
         """
         if self.y_transform is None:
             return
-        
-                
+      
         # TODO: Check if we need to track if transform has already been 
         # applied to avoid double-inverting. Normally I dont expect any issues 
         # as every process() is followed by a postprocess(). The only issues can
@@ -653,12 +652,25 @@ class NormativeModel:
         if self.y_transform == "log1p":
             # Apply log1p transform to the response variable Y
             for var in ["Y"]:
-                if var in data.data_vars:
+                if (data[var] < -1).any():
+                    raise ValueError("Cannot apply log1p transform to variable "
+                                     f"'{var}' because it contains values less "
+                                     "than -1."
+                                     )
+                else:
                     data[var] = np.log1p(data[var])
+                    
         elif self.y_transform == "log":
             # Apply natural log transform to the response variable Y
             for var in ["Y"]:
-                if var in data.data_vars:
+                if (data[var] <= 0).any():
+                    raise ValueError(
+                        f"Cannot apply log transform to variable '{var}' "
+                        "because it contains non-positive values. "
+                        "Consider using 'log1p' transform or ensuring "
+                        "all values are positive."
+                    )
+                else:
                     data[var] = np.log(data[var])
 
     def _invert_y_transform(self, data: NormData) -> None:
