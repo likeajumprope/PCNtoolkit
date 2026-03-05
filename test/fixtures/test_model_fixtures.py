@@ -1,3 +1,6 @@
+import os
+import shutil
+
 import pytest
 
 from pcntoolkit.dataio.norm_data import NormData

@@ -1,3 +1,5 @@
+from math import log
+
 import pytest
 from typing import Any, Callable
 
@@ -11,6 +13,7 @@ from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import BLR
 from test.fixtures.norm_data_fixtures import *
 from test.fixtures.path_fixtures import *
+import os
 
 # Default keyword arguments shared by all BLR tests.
 BLR_BASE_CONFIG: dict[str, Any] = {
@@ -84,7 +87,7 @@ def fitted_blr_model(
 
 
 @pytest.fixture
-def new_norm_blr_model(
+def norm_blr_model(
     blr_model_factory: Callable,
     save_dir_blr
 ) -> NormativeModel:
@@ -102,12 +105,80 @@ def new_norm_blr_model(
 
 
 @pytest.fixture
-def fitted_norm_blr_model(new_norm_blr_model: NormativeModel,
+def fitted_norm_blr_model(norm_blr_model: NormativeModel,
                           norm_data_from_arrays: NormData
                           ) -> NormativeModel:
     print("removing items")
-    if os.path.exists(new_norm_blr_model.save_dir):
-        shutil.rmtree(new_norm_blr_model.save_dir)
-    os.makedirs(new_norm_blr_model.save_dir, exist_ok=True)
-    new_norm_blr_model.fit(norm_data_from_arrays)
-    return new_norm_blr_model
+    if os.path.exists(norm_blr_model.save_dir):
+        shutil.rmtree(norm_blr_model.save_dir)
+    os.makedirs(norm_blr_model.save_dir, exist_ok=True)
+    norm_blr_model.fit(norm_data_from_arrays)
+    return norm_blr_model
+
+
+@pytest.fixture
+def log1p_transform_norm_blr_model(
+    save_dir_test_model: str
+) -> NormativeModel:
+    """Create a NormativeModel using BLR with log1p.
+
+    Returns
+    -------
+    NormativeModel
+        Un-fitted normative model with log1p transform.
+    """
+    # Build a fresh save directory
+    log_dir = os.path.join(save_dir_test_model, "log1p")
+    if os.path.exists(log_dir):
+        shutil.rmtree(log_dir)
+    os.makedirs(log_dir, exist_ok=True)
+    # Create  test regression model
+    blr_model = BLR("test_model_log1p")
+    # Return a NormativeModel with the log1p transform
+    return NormativeModel(
+        template_regression_model=blr_model,
+        savemodel=False,
+        saveresults=False,
+        evaluate_model=False,
+        saveplots=False,
+        save_dir=log_dir,
+        inscaler="standardize",
+        outscaler="standardize",
+        name="test_model_log1p",
+        y_transform="log1p",
+    )
+
+
+@pytest.fixture
+def log_transform_norm_blr_model(
+    save_dir_test_model: str,
+) -> NormativeModel:
+    """Create a NormativeModel using BLR with natural log y_transform.
+
+    Returns
+    -------
+    NormativeModel
+        Un-fitted normative model with natural-log transform.
+    """
+    # Build a fresh save directory for this fixture
+    log_dir = os.path.join(save_dir_test_model, "log")
+    if os.path.exists(log_dir):
+        # Remove stale directory from previous test runs
+        shutil.rmtree(log_dir)
+    os.makedirs(log_dir, exist_ok=True)
+    # Create a BLR regression model for the natural-log transform test
+    blr_model = BLR("test_model_log")
+    # Return NormativeModel with natural-log transform enabled
+    return NormativeModel(
+        template_regression_model=blr_model,
+        savemodel=False,
+        saveresults=False,
+        evaluate_model=False,
+        saveplots=False,
+        save_dir=log_dir,
+        inscaler="standardize",
+        outscaler="standardize",
+        name="test_model_log",
+        y_transform="log",
+    )
+
