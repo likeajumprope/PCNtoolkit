@@ -191,6 +191,10 @@ class BLR(RegressionModel):
             Output.warning(Warnings.BLR_CG_NOT_SUPPORTED_WITH_WARP)
             self.optimizer = "l-bfgs-b"
 
+        if self.models_variance and self.optimizer.lower() == "cg":
+            Output.warning(Warnings.BLR_CG_NOT_SUPPORTED_WITH_HETEROSKEDASTIC)
+            self.optimizer = "l-bfgs-b"
+
         match self.optimizer.lower():
             case "cg":
                 out = optimize.fmin_cg(
@@ -810,6 +814,12 @@ class BLR(RegressionModel):
                 Output.error(Errors.ERROR_BLR_CG_NOT_SUPPORTED_WITH_WARP)
             )
 
+        if self.models_variance:
+            raise NotImplementedError(
+                "Analytical gradients are not implemented for heteroskedastic models. "
+                "Use optimizer='l-bfgs-b' instead."
+            )
+
         # load posterior and prior covariance
         if (hyp != self.hyp).any() or not hasattr(self, "A"):
             try:
@@ -870,7 +880,7 @@ class BLR(RegressionModel):
             )
 
         # scaling parameter(s)
-        for i, _ in enumerate(beta):
+        for i, _ in enumerate(alpha):
             # first compute derivatives with respect to alpha
             if len(alpha) == self.D:  # are we using ARD?
                 dLambda_a = np.zeros((self.D, self.D))
