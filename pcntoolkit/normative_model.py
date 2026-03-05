@@ -655,6 +655,10 @@ class NormativeModel:
             for var in "Y":
                 if var in data.data_vars:
                     data[var] = np.log1p(data[var])
+        elif self.y_transform == "log":
+            for var in "Y":
+                if var in data.data_vars:
+                    data[var] = np.log(data[var])
 
     def _invert_y_transform(self, data: NormData) -> None:
         """
@@ -680,6 +684,10 @@ class NormativeModel:
             for var in ("Y", "centiles", "Yhat", "Y_harmonized", "thrive_Y"):
                 if var in data.data_vars:
                     data[var] = np.expm1(data[var])
+        elif self.y_transform == "log":
+            for var in ("Y", "centiles", "Yhat", "Y_harmonized", "thrive_Y"):
+                if var in data.data_vars:
+                    data[var] = np.exp(data[var])
             
     def evaluate(self, data: NormData) -> None:
         """
