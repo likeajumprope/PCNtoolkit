@@ -17,8 +17,8 @@ Each warping function implements three core methods:
     - invf(): Inverse transformation (Gaussian -> non-Gaussian)
     - df(): Derivative of the transformation
 
-Example
--------
+Examples
+--------
 >>> from pcntoolkit.regression_model.blr.warp import WarpBoxCox, WarpCompose
 >>> # Single warping function
 >>> warp = WarpBoxCox()
