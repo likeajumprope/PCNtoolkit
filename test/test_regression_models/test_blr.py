@@ -6,6 +6,8 @@ from pcntoolkit.regression_model.blr import BLR
 from test.fixtures.blr_model_fixtures import *
 from test.fixtures.norm_data_fixtures import *
 from test.fixtures.path_fixtures import *
+from pcntoolkit.normative_model import NormativeModel
+
 
 
 @pytest.mark.parametrize("n_iter,tol,ard", [(100, 1e-3, False), (1, 1e-6, True)])
@@ -39,7 +41,8 @@ def test_blr_to_and_from_dict_and_args(n_iter, tol, ard):
     assert blr2.l_bfgs_b_norm == "l2"
 
 
-def test_fit(blr_model: BLR, norm_data_from_arrays: NormData, fitted_norm_blr_model: NormativeModel):
+def test_fit(blr_model_factory, norm_data_from_arrays: NormData, fitted_norm_blr_model: NormativeModel):
+    blr_model = blr_model_factory()
     print("fitting")
     response_var = norm_data_from_arrays.response_vars[0]
     X, be, be_maps, Y, _ = fitted_norm_blr_model.extract_data(norm_data_from_arrays.sel(response_vars=response_var))
@@ -68,20 +71,29 @@ def test_parse_hyps(norm_data_from_arrays: NormData):
     assert True
 
 
-def test_cg_ard_fit(norm_data_from_arrays: NormData, fitted_norm_blr_model: NormativeModel):
-    """Test that CG optimizer with ARD (non-heteroskedastic) fits successfully."""
-    from pcntoolkit.math_functions.basis_function import BsplineBasisFunction
-
-    blr_cg = BLR(
-        "test_blr_cg_ard",
-        n_iter=100,
-        tol=1e-3,
-        ard=True,
-        optimizer="cg",
-        fixed_effect=True,
-        basis_function_mean=BsplineBasisFunction(basis_column=0, degree=3, nknots=5),
-    )
+def test_cg_ard_fit(
+    blr_model_factory,
+    norm_data_from_arrays: NormData,
+    fitted_norm_blr_model: NormativeModel,
+):
+    """Test that CG optimizer with ARD (non-heteroskedastic) fits successfully.
+    
+    Parameters
+    ----------
+    blr_model_factory: Callable
+        Fixture that builds BLR models with optional overrides.
+    norm_data_from_arrays: NormData
+        Fixture that provides NormData from arrays.
+    fitted_norm_blr_model: NormativeModel
+        Fixture that provides a fitted NormativeModel 
+    for testing.
+    """
+    # Build a BLR variant with ARD enabled and CG optimizer;
+    # all other settings are inherited from BLR_BASE_CONFIG.
+    blr_cg = blr_model_factory(ard=True, optimizer="cg")
+    # Extract data for the first response variable.
     response_var = norm_data_from_arrays.response_vars[0]
+    # Unpack design matrix, batch effects, maps, and targets.
     X, be, be_maps, Y, _ = fitted_norm_blr_model.extract_data(
         norm_data_from_arrays.sel(response_vars=response_var)
     )
