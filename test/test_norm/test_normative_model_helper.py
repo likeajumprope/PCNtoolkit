@@ -297,7 +297,7 @@ def test_blr_model_to_and_from_dict_and_args(blr_model_args: dict, norm_data_fro
     assert not model1.fixed_effect_var
 
 
-def test_log1p_transformed_centiles(
+def test_log1p_transform(
     log1p_transform_norm_blr_model: NormativeModel,
     norm_data_from_arrays: NormData,
     test_norm_data_from_arrays: NormData,
@@ -305,11 +305,12 @@ def test_log1p_transformed_centiles(
     log1p_transform_norm_blr_model.fit_predict(
         norm_data_from_arrays, test_norm_data_from_arrays
     )
-    
+
     # Check that Y are non-negative in the original data
     assert bool(
-        np.all(test_norm_data_from_arrays["Y"].values >= 0)
+        np.all(test_norm_data_from_arrays["Y"].values > 0)
     )
+
     # Both training and test centiles should be bigger than 0 due to the 
     # exp(Y) - 1 transform
     assert bool(
@@ -319,15 +320,6 @@ def test_log1p_transformed_centiles(
         np.all(test_norm_data_from_arrays["centiles"].values > -1)
     )
 
-
-def test_log1p_transformed_yhat(
-    log1p_transform_norm_blr_model: NormativeModel,
-    norm_data_from_arrays: NormData,
-    test_norm_data_from_arrays: NormData,
-) -> None:
-    log1p_transform_norm_blr_model.fit_predict(
-        norm_data_from_arrays, test_norm_data_from_arrays
-    )
     # We dont expect any negative yhat values in the train and test dataset
     assert bool(
         np.all(norm_data_from_arrays["Yhat"].values >= 0)
@@ -337,7 +329,7 @@ def test_log1p_transformed_yhat(
     )
 
 
-def test_log_transformed_centiles(
+def test_log_transformed(
     log_transform_norm_blr_model: NormativeModel,
     norm_data_from_arrays: NormData,
     test_norm_data_from_arrays: NormData,
@@ -350,6 +342,7 @@ def test_log_transformed_centiles(
     assert bool(
         np.all(test_norm_data_from_arrays["Y"].values > 0)
     )
+
     # Both training and test centiles should be bigger than 0 due to the exp(Y)
     # transform
     assert bool(
@@ -359,16 +352,6 @@ def test_log_transformed_centiles(
         np.all(test_norm_data_from_arrays["centiles"].values > 0)
     )
 
-
-def test_log_transformed_yhat(
-    log_transform_norm_blr_model: NormativeModel,
-    norm_data_from_arrays: NormData,
-    test_norm_data_from_arrays: NormData,
-) -> None:
-    log_transform_norm_blr_model.fit_predict(
-        norm_data_from_arrays, test_norm_data_from_arrays
-    )
-    
     # We dont expect any negative yhat values in the train and test dataset
     assert bool(
         np.all(norm_data_from_arrays["Yhat"].values > 0)
