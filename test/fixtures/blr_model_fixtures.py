@@ -87,7 +87,7 @@ def fitted_blr_model(
 
 
 @pytest.fixture
-def new_norm_blr_model(
+def norm_blr_model(
     blr_model_factory: Callable,
     save_dir_blr
 ) -> NormativeModel:
@@ -105,15 +105,15 @@ def new_norm_blr_model(
 
 
 @pytest.fixture
-def fitted_norm_blr_model(new_norm_blr_model: NormativeModel,
+def fitted_norm_blr_model(norm_blr_model: NormativeModel,
                           norm_data_from_arrays: NormData
                           ) -> NormativeModel:
     print("removing items")
-    if os.path.exists(new_norm_blr_model.save_dir):
-        shutil.rmtree(new_norm_blr_model.save_dir)
-    os.makedirs(new_norm_blr_model.save_dir, exist_ok=True)
-    new_norm_blr_model.fit(norm_data_from_arrays)
-    return new_norm_blr_model
+    if os.path.exists(norm_blr_model.save_dir):
+        shutil.rmtree(norm_blr_model.save_dir)
+    os.makedirs(norm_blr_model.save_dir, exist_ok=True)
+    norm_blr_model.fit(norm_data_from_arrays)
+    return norm_blr_model
 
 
 @pytest.fixture
