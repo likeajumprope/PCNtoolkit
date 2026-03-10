@@ -206,8 +206,33 @@ class BLR(RegressionModel):
                     maxiter=self.n_iter,
                     full_output=1,
                 )
+
             case "powell":
-                out = optimize.fmin_powell(func=self.loglik, x0=hyp0, args=args, full_output=1)
+                # Run Powell optimiser with the supplied initial hyps
+                out = optimize.fmin_powell(
+                    func=self.loglik,
+                    x0=hyp0,
+                    args=args,
+                    full_output=1,
+                )
+                # If any estimated hyperparameter is non-finite the
+                # optimiser has diverged; restart from zeros
+                if not np.all(np.isfinite(out[0])):
+                    Output.warning(
+                        Warnings.BLR_POWELL_FAILED_RESTARTING
+                    )
+                    out = optimize.fmin_powell(
+                        func=self.loglik,
+                        x0=np.zeros(self.n_hyp),
+                        args=args,
+                        full_output=1,
+                    )
+                # If hyperparameters are still non-finite after the
+                # restart, fall back to the more robust l-bfgs-b
+                if not np.all(np.isfinite(out[0])):
+                    Output.warning(
+                        Warnings.BLR_POWELL_FAILED_FALLING_BACK
+                    )
             case "nelder-mead":
                 out = optimize.fmin(func=self.loglik, x0=hyp0, args=args, full_output=1)
             case "l-bfgs-b":
