@@ -81,6 +81,7 @@ def plot_centiles(
     if response_vars is None:
         response_vars = model.response_vars
     response_vars = list(set(model.response_vars).intersection(set(response_vars)))
+    # Select the batch effect that has the most data in the scatter data
     batch_effects = {k: max(v.items(), key=lambda x: x[1])[0] for k, v in model.batch_effect_counts.items()}
 
     # Create some synthetic data with a single batch effect
@@ -319,8 +320,10 @@ def plot_centiles_advanced(
         for c in model.covariates:
             cov = scatter_data.X.sel(covariates=c).values
             min, max = covariate_ranges[c]
-            idx = np.where((cov > min) & (cov < max))[0]
-            scatter_data = scatter_data.sel(observations=scatter_data.observations[idx])
+            idx = np.where((cov >= min) & (cov <= max))[0]
+            scatter_data = scatter_data.sel(
+                observations=scatter_data.observations[idx]
+            )
 
     if batch_effects == "all":
         if scatter_data:
@@ -329,6 +332,7 @@ def plot_centiles_advanced(
             batch_effects = model.unique_batch_effects
     elif batch_effects is None:
         if scatter_data:
+            # Select the first batch effect based on alphabetical order
             batch_effects = {k: [v[0]] for k, v in scatter_data.unique_batch_effects.items()}
         else:
             batch_effects = {k: [v[0]] for k, v in model.unique_batch_effects.items()}
