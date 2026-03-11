@@ -101,7 +101,7 @@ class Warnings:
     EXTRA_COVARIATES = "The dataset {dataset_name} has too many covariates: {covariates}"
     EXTRA_RESPONSE_VARS = "The dataset {dataset_name} has too many response variables: {response_vars}"
     UNKNOWN_BATCH_EFFECTS = "The dataset {dataset_name} has unknown batch effects: {batch_effects}"
-    BLR_ESTIMATION_OF_POSTERIOR_DISTRIBUTION_FAILED = "Estimation of posterior distribution failed due to: \n{error}"
+    BLR_ESTIMATION_OF_POSTERIOR_DISTRIBUTION_FAILED = "Estimation of posterior distribution failed due to: \n{error}. Retrying optimization."
     ERROR_GETTING_JOB_STATUSES = "Error getting job statuses: {stderr}"
     ERROR_PARSING_JOB_STATUS_LINE = "Error parsing job status line: {line} - {error}"
     PREDICT_DATA_NOT_USED_IN_KFOLD_CROSS_VALIDATION = "Predict data not used in k-fold cross-validation"
