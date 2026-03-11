@@ -146,14 +146,6 @@ class Warnings:
         "Falling back to the default 'l-bfgs-b' optimizer. "
         "Please set optimizer='l-bfgs-b' to avoid this warning."
     )
-    BLR_POWELL_FAILED_RESTARTING = (
-        "Powell optimizer produced non-finite hyperparameters."
-        " Restarting optimisation from zeros."
-    )
-    BLR_POWELL_FAILED_FALLING_BACK = (
-        "Powell optimizer still produced non-finite hyperparameters"
-        "We recommend setting optimizer='l-bfgs-b' to avoid this warning."
-    )
 
 class Errors:
     ERROR_BATCH_SIZE_AND_N_BATCHES_MISMATCH = "Batch size ({batch_size}) and number of batches ({n_batches}) are both specified, but do not match the number of response variables ({n_response_vars})"
@@ -229,6 +221,10 @@ class Errors:
     OFFSET_NOT_VALID = "Invalid list of offsets provided"
     WB_COMMAND_FAILED = "wb_command failed with error: {error}"
     WB_COMMAND_NOT_FOUND = "wb_command not found in PATH"
+    ERROR_BLR_POWELL = (
+        "Powell optimizer failed."
+        "We recommend setting optimizer='l-bfgs-b' to avoid this warning."
+    )
 
 
 class Output:
