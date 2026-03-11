@@ -617,28 +617,18 @@ class BLR(RegressionModel):
         tuple[np.ndarray, np.ndarray, np.ndarray]
             Parsed alpha, beta and gamma parameters.
         """
-        # Avoid overflow of np.exp by computing the largest number we can
-        # safely exponentiate in float64
-        MAX_EXP: float = np.log(np.finfo(np.float64).max)
-
         N = Phi.shape[0]
         beta: np.ndarray = None  # type: ignore
         # Noise precision
         if self.models_variance:
             if Phi_var is None or (Phi_var == 0).all():
-                raise ValueError(
-                    Output.error(Errors.ERROR_BLR_VAR_X_NOT_PROVIDED)
-                )
+                raise ValueError(Output.error(Errors.ERROR_BLR_VAR_X_NOT_PROVIDED))
             Dv = Phi_var.shape[1]
             w_d = np.asarray(hyp[0:Dv])
-            # Dont allow the exponent to overflow to inf
-            beta = np.exp(
-                np.clip(Phi_var.dot(w_d), -MAX_EXP, MAX_EXP)
-            )
+            beta = np.exp(Phi_var.dot(w_d))
             n_lik_param = len(w_d)
         else:
-            # Dont allow the exponent to overflow to inf
-            beta = np.asarray([np.exp(np.clip(hyp[0], -MAX_EXP, MAX_EXP))])
+            beta = np.asarray([np.exp(hyp[0])])
             n_lik_param = len(beta)
 
         if self.warp:
@@ -660,13 +650,9 @@ class BLR(RegressionModel):
 
         # Coefficients precision
         if isinstance(beta, list) or isinstance(beta, np.ndarray):
-            # Dont allow the exponent to overflow to inf
-            alpha = np.exp(
-                np.clip(hyp[n_lik_param:], -MAX_EXP, MAX_EXP)
-            )
+            alpha = np.exp(hyp[n_lik_param:])
         else:
-            # Dont allow the exponent to overflow to inf
-            alpha = np.exp(np.clip(hyp[1:], -MAX_EXP, MAX_EXP))
+            alpha = np.exp(hyp[1:])
 
         return alpha, beta, gamma  # type: ignore
 
@@ -718,13 +704,9 @@ class BLR(RegressionModel):
         # Compute the posterior precision matrix A
         XtLambda_n = X.T * self.lambda_n_vec
         self.A = XtLambda_n.dot(X) + self.Lambda_a
-        # Add a small value to the diagonal of A to ensure that inverse of A
-        # can be computed when the optimizer estimates hyperparameter values
-        # close to 0
-        self.A = self.A + 0.001 * np.eye(self.A.shape[0])
+        invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
 
         # Compute the posterior mean m
-        invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
         self.m = (invAXt * self.lambda_n_vec).dot(y)
 
     def loglik(
