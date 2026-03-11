@@ -218,9 +218,8 @@ class BLR(RegressionModel):
                 # If at least one hyperparameter is non-finite, output an error
                 # and recommend to the user the more robust l-bfgs-b optimizer
                 if not np.all(np.isfinite(np.exp(out[0]))):
-                    Output.error(
-                        Errors.ERROR_BLR_POWELL
-                    )
+                    raise OverflowError(Output.error(
+                        Errors.ERROR_BLR_POWELL))
             case "nelder-mead":
                 out = optimize.fmin(func=self.loglik, x0=hyp0, args=args, full_output=1)
             case "l-bfgs-b":

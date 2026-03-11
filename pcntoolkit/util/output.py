@@ -222,8 +222,9 @@ class Errors:
     WB_COMMAND_FAILED = "wb_command failed with error: {error}"
     WB_COMMAND_NOT_FOUND = "wb_command not found in PATH"
     ERROR_BLR_POWELL = (
-        "Powell optimizer failed."
-        "We recommend setting optimizer='l-bfgs-b' to avoid this warning."
+        "Powell optimizer failed. "
+        "We recommend running your code again and "
+        "setting optimizer='l-bfgs-b'."
     )
 
 
