@@ -101,7 +101,11 @@ class Warnings:
     EXTRA_COVARIATES = "The dataset {dataset_name} has too many covariates: {covariates}"
     EXTRA_RESPONSE_VARS = "The dataset {dataset_name} has too many response variables: {response_vars}"
     UNKNOWN_BATCH_EFFECTS = "The dataset {dataset_name} has unknown batch effects: {batch_effects}"
-    BLR_ESTIMATION_OF_POSTERIOR_DISTRIBUTION_FAILED = "Estimation of posterior distribution failed due to: \n{error}"
+    BLR_ESTIMATION_OF_POSTERIOR_DISTRIBUTION_FAILED = (
+        "Posterior estimation failed: \n{error}. "
+        "\nThe optimizer could not find a stable solution. "
+        "Retrying optimization."
+    )
     ERROR_GETTING_JOB_STATUSES = "Error getting job statuses: {stderr}"
     ERROR_PARSING_JOB_STATUS_LINE = "Error parsing job status line: {line} - {error}"
     PREDICT_DATA_NOT_USED_IN_KFOLD_CROSS_VALIDATION = "Predict data not used in k-fold cross-validation"
@@ -221,6 +225,11 @@ class Errors:
     OFFSET_NOT_VALID = "Invalid list of offsets provided"
     WB_COMMAND_FAILED = "wb_command failed with error: {error}"
     WB_COMMAND_NOT_FOUND = "wb_command not found in PATH"
+    ERROR_BLR_POWELL = (
+        "Powell optimizer failed. "
+        "We recommend running your code again and "
+        "setting optimizer='l-bfgs-b'."
+    )
 
 
 class Output:

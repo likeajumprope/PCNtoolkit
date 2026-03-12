@@ -206,8 +206,20 @@ class BLR(RegressionModel):
                     maxiter=self.n_iter,
                     full_output=1,
                 )
+
             case "powell":
-                out = optimize.fmin_powell(func=self.loglik, x0=hyp0, args=args, full_output=1)
+                # Run Powell optimiser with the supplied initial hyps
+                out = optimize.fmin_powell(
+                    func=self.loglik,
+                    x0=hyp0,
+                    args=args,
+                    full_output=1,
+                )
+                # If at least one hyperparameter is non-finite, output an error
+                # and recommend to the user the more robust l-bfgs-b optimizer
+                if not np.all(np.isfinite(np.exp(out[0]))):
+                    raise OverflowError(Output.error(
+                        Errors.ERROR_BLR_POWELL))
             case "nelder-mead":
                 out = optimize.fmin(func=self.loglik, x0=hyp0, args=args, full_output=1)
             case "l-bfgs-b":
@@ -677,10 +689,12 @@ class BLR(RegressionModel):
         else:
             raise ValueError(Output.error(Errors.BLR_HYPERPARAMETER_VECTOR_INVALID_LENGTH))
 
-        # Compute the posterior precision and mean
+        # Compute the posterior precision matrix A
         XtLambda_n = X.T * self.lambda_n_vec
         self.A = XtLambda_n.dot(X) + self.Lambda_a
         invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+
+        # Compute the posterior mean m
         self.m = (invAXt * self.lambda_n_vec).dot(y)
 
     def loglik(
