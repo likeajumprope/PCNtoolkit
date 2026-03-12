@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from sklearn.linear_model import LinearRegression
+from matplotlib import pyplot as plt
 
 from pcntoolkit.dataio.norm_data import NormData
 
@@ -129,7 +130,7 @@ def get_correlation_matrix(data: NormData, bandwidth: int, covariate_name="age")
                 cors[i, age2, age1] = cors[i, age1, age2] = merged[f"{rv}_x"].corr(merged[f"{rv}_y"])
         elif age1 != age2:
             # Otherwise, set all response variables to NaN for these ages
-            cors[:, age2, age1] = cors[:, age1, age2] = np.NaN
+            cors[:, age2, age1] = cors[:, age1, age2] = np.nan
     # Fill in missing correlation values
     newcors = fill_missing(bandwidth, cors)
     newcors = xr.DataArray(
@@ -156,6 +157,50 @@ def get_thrive_Z_X(cors: xr.DataArray, start_x: xr.DataArray, start_z: xr.DataAr
         thrive_X[:, i + 1] = thrive_X[:, i] + 1
         this_cors = padded_cors[thrive_X[:, i], thrive_X[:, i + 1]]
         thrive_Z[:, i + 1] = thrive_Z[:, i] * this_cors + np.sqrt(1 - this_cors**2) * z_thrive
-    thrive_Z = xr.DataArray(thrive_Z, dims=("observations", "offset"))
-    thrive_X = xr.DataArray(thrive_X.astype(float), dims=("observations", "offset"))
+    thrive_Z = xr.DataArray(thrive_Z, dims=("dummy_obs", "offset"))
+    thrive_X = xr.DataArray(thrive_X.astype(float), dims=("dummy_obs", "offset"))
     return thrive_Z, thrive_X
+
+def get_single_thriveline(cors, acc=0, z_thrive=-1.96):
+    thriveline = np.zeros_like(cors)
+    thriveline = np.append(acc, thriveline)
+    for i, c in enumerate(cors):
+        acc = c * acc + np.sqrt(1 - c**2) * z_thrive
+        thriveline[i+1] = acc
+    return thriveline
+
+def get_thrivelines(cors, start_age, stop_age, step_age, length_v, start_z, end_z, z_thrive):
+    thrivelines_ = np.zeros(((end_z - start_z) * (stop_age - start_age) // step_age, length_v))
+    ages_ = np.zeros_like(thrivelines_)
+    i = 0
+    for age in range(start_age, stop_age, step_age):
+        cor_slice = cors[age : age + length_v - 1]
+        ages = np.arange(age, age + length_v)
+        for z in range(start_z, end_z):
+            line = get_single_thriveline(cor_slice, acc=z, z_thrive=z_thrive)
+            to_pad = length_v - len(line)
+            thrivelines_[i] = np.pad(line, ((0, to_pad)), mode="edge")
+            ages_[i] = ages
+            i += 1
+    thrivelines_ = np.array(thrivelines_)
+    ages_ = np.array(ages_)
+    return thrivelines_, ages_[: len(thrivelines_)]
+
+def compute_thrivelines(data, bandwidth=2, age_range=(0, 10, 1),
+                        trajectory_length=3, centile_params=(-3, 3, -1.96)):
+    """Returns (ages, z_scores) as plottable arrays"""
+    cors, newcors = get_correlation_matrix(data, bandwidth)
+    diagonal = np.diagonal(newcors.to_numpy(), offset=-1)
+    age_start, age_end, age_step = age_range
+    z_min, z_max, threshold = centile_params
+    thrive_Z, ages = get_thrivelines(diagonal, age_start, age_end, age_step,
+                                      trajectory_length, z_min, z_max, threshold)
+    shaped_lines = thrive_Z.reshape((-1, trajectory_length))
+    shaped_ages = ages.reshape((-1, trajectory_length))
+    return shaped_ages.T, shaped_lines.T
+
+
+def plot_thrivelines(data, **kwargs):
+    ages, z_scores = compute_thrivelines(data, **kwargs)
+    plt.plot(ages, z_scores)
+    plt.show()

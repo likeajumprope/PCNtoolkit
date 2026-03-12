@@ -776,7 +776,7 @@ class NormativeModel:
         self.correlation_matrix = get_correlation_matrix(data, bandwidth, covariate)
 
     def compute_thrivelines(
-        self: NormativeModel, data: NormData, span: int = 5, step: int = 1, z_thrive: float = 0.0, covariate="age", **kwargs
+        self: NormativeModel, data: NormData, span: int = 5, step: int = 1, z_thrive: float = 0.0, covariate="age", grid_data: NormData = None, **kwargs
     ) -> NormData:
         """
         Computes the thrivelines for each responsevar in the data
@@ -806,6 +806,16 @@ class NormativeModel:
         # Make Z-score predictions if needed
         if not hasattr(data, "Z"):
             self.predict(data)
+            
+            # Preprocess grid_data so its Z-scores are in the same scaled space
+        if grid_data is not None:
+            self.preprocess(grid_data)
+            if "Z" not in grid_data:
+                self.compute_zscores(grid_data)
+        
+        source_data = grid_data if grid_data is not None else data
+        n_dummy = source_data.X.shape[0]
+        dummy_obs_coord = source_data.coords["observations"].values
 
         respvar_intersection = list(set(self.response_vars).intersection(data.response_vars.values))
 
@@ -814,35 +824,42 @@ class NormativeModel:
 
         # Create X, Y, and Z for thrivelines data
         data["thrive_Z"] = xr.DataArray(
-            np.zeros((data.X.shape[0], len(respvar_intersection), offsets.shape[0])),
-            dims=("observations", "response_vars", "offset"),
-            coords={"offset": offsets},
+            np.zeros((n_dummy, len(respvar_intersection), offsets.shape[0])),
+            dims=("dummy_obs", "response_vars", "offset"),
+            coords={"offset": offsets,
+                    "dummy_obs": dummy_obs_coord,
+                    "response_vars": respvar_intersection  },
         )
         data["thrive_Y"] = xr.DataArray(
-            np.zeros((data.X.shape[0], len(respvar_intersection), offsets.shape[0])),
-            dims=("observations", "response_vars", "offset"),
-            coords={"offset": offsets},
+            np.zeros((n_dummy, len(respvar_intersection), offsets.shape[0])),
+            dims=("dummy_obs", "response_vars", "offset"),
+            coords={"offset": offsets,
+                    "dummy_obs": dummy_obs_coord,
+                    "response_vars": respvar_intersection},
         )
         for responsevar in respvar_intersection:
-            resp_predict_data = data.sel({"response_vars": responsevar})
+            resp_predict_data = source_data.sel({"response_vars": responsevar})
             X, be, _, m, Z = self.extract_data(resp_predict_data)
+            
             X_cov = self.inscalers[covariate].inverse_transform(X.sel({"covariates": covariate}, drop=False))
             thrive_Z, thrive_X = get_thrive_Z_X(cormat.sel({"response_vars": responsevar}), X_cov, Z, span, z_thrive=z_thrive)
+            
             data["thrive_X"] = xr.DataArray(
                 self.inscalers[covariate].transform(thrive_X),
-                dims=("observations", "offset"),
-                coords={"offset": offsets},
+                dims=("dummy_obs", "offset"),
+                coords={"offset": offsets,
+                        "dummy_obs": dummy_obs_coord
+                        },
             )
             data["thrive_Z"].loc[{"response_vars": responsevar}] = thrive_Z
             for io, o in enumerate(offsets):
                 this_Z = thrive_Z[:, io]
                 offset_X = X.copy()
-                offset_X.loc[{"covariates": self.thrive_covariate}] = data.thrive_X.sel({"offset": o})
-                scaled_thrive_Y = self[responsevar].backward(X, be, this_Z)
+                offset_X.loc[{"covariates": self.thrive_covariate}] = data.thrive_X.sel({"offset": o}).values
+                scaled_thrive_Y = self[responsevar].backward(X, be, this_Z).values
                 data["thrive_Y"].loc[{"response_vars": responsevar, "offset": o}] = scaled_thrive_Y
         # self.postprocess(data)
         return data
-
     def register_data_info(self, data: NormData) -> None:
         self.covariates = data.covariates.to_numpy().copy().tolist()
         self.response_vars = data.response_vars.to_numpy().copy().tolist()
