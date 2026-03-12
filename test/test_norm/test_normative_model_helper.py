@@ -9,6 +9,7 @@ from pcntoolkit.math_functions.prior import *
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import *
 from pcntoolkit.regression_model.hbr import *
+from test.fixtures.blr_model_fixtures import *
 from test.fixtures.data_fixtures import *
 from test.fixtures.norm_data_fixtures import *
 from test.fixtures.path_fixtures import *
@@ -294,3 +295,70 @@ def test_blr_model_to_and_from_dict_and_args(blr_model_args: dict, norm_data_fro
     assert model1.l_bfgs_b_norm == "l2"
     assert model1.fixed_effect
     assert not model1.fixed_effect_var
+
+
+def test_log1p_transform(
+    log1p_transform_norm_blr_model: NormativeModel,
+    norm_data_from_arrays: NormData,
+    test_norm_data_from_arrays: NormData,
+) -> None:
+    log1p_transform_norm_blr_model.fit_predict(
+        norm_data_from_arrays, test_norm_data_from_arrays
+    )
+
+    # Check that Y are non-negative in the original data
+    assert bool(
+        np.all(test_norm_data_from_arrays["Y"].values >= 0)
+    )
+
+    # Both training and test centiles should be bigger than 0 due to the 
+    # exp(Y) - 1 transform
+    assert bool(
+        np.all(norm_data_from_arrays["centiles"].values > -1)
+    )
+    assert bool(
+        np.all(test_norm_data_from_arrays["centiles"].values > -1)
+    )
+
+    # We dont expect any negative yhat values in the train and test dataset
+    assert bool(
+        np.all(norm_data_from_arrays["Yhat"].values >= 0)
+    )
+    assert bool(
+        np.all(test_norm_data_from_arrays["Yhat"].values >= 0)
+    )
+
+
+def test_log_transformed(
+    log_transform_norm_blr_model: NormativeModel,
+    norm_data_from_arrays: NormData,
+    test_norm_data_from_arrays: NormData,
+) -> None:
+    # Force the data to be >= 1e-6
+    test_norm_data_from_arrays["Y"].values.clip(min=1e-6)
+
+    log_transform_norm_blr_model.fit_predict(
+        norm_data_from_arrays, test_norm_data_from_arrays
+    )
+
+    # Check that Y are positive in the original data
+    assert bool(
+        np.all(test_norm_data_from_arrays["Y"].values > 0)
+    )
+
+    # Both training and test centiles should be bigger than 0 due to the exp(Y)
+    # transform
+    assert bool(
+        np.all(norm_data_from_arrays["centiles"].values > 0)
+    )
+    assert bool(
+        np.all(test_norm_data_from_arrays["centiles"].values > 0)
+    )
+
+    # We dont expect any negative yhat values in the train and test dataset
+    assert bool(
+        np.all(norm_data_from_arrays["Yhat"].values > 0)
+    )
+    assert bool(
+        np.all(test_norm_data_from_arrays["Yhat"].values > 0)
+    )

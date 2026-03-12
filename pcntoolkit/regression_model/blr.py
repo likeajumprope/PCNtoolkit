@@ -359,6 +359,7 @@ class BLR(RegressionModel):
                 self.ys[mask] = self.ys[mask] + residual_mean
                 self.s2[mask] = np.square(np.sqrt(self.s2[mask]) * correction_factor)
 
+        # Compute the centiles in the original Y space: centiles = Z * std + mean
         centiles = np_Z * np.sqrt(self.s2) + self.ys
         if self.warp:
             centiles = self.warp.invf(centiles, self.gamma)
