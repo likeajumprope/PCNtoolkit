@@ -16,7 +16,7 @@ house rules (style, commits), and avoid common pitfalls. When you create new cod
   performing normative modelling; developers extending
   regression models, likelihoods, or data pipelines.
 - Tech stack:
-  - Python >=3.10, <3.13
+  - Python >=3.11, <3.13
   - PyMC / nutpie for Bayesian inference
   - NumPy, SciPy, scikit-learn, pandas, xarray for data
   - matplotlib, seaborn for plotting
@@ -115,7 +115,7 @@ house rules (style, commits), and avoid common pitfalls. When you create new cod
 # 4. Dependencies and Environment
 
 - System requirements
-  - Python >=3.10, <3.13; Git
+  - Python >=3.11, <3.13; Git
   - On Windows: conda packages `m2w64-toolchain` and
     `libpython` are needed for C extensions
 - Package manager
