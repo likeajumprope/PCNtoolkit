@@ -1219,7 +1219,7 @@ class NormData(xr.Dataset):
             A = np.zeros((len(centiles), len(obs), len(response_vars)))
             for i, c in enumerate(centiles):
                 sub = df[df["centile"] == c]
-                sub.sort_values(by="observations")
+                sub = sub.sort_values(by="observations")
                 for j, rv in enumerate(response_vars):
                     A[i, :, j] = sub[rv]
 
