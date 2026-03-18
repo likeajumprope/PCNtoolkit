@@ -10,13 +10,11 @@ Reporting Bugs
 
 This section guides you through submitting a bug report. Following these guidelines helps maintainers and the community understand your report, reproduce the behavior, and find related reports.
 
-Before Submitting A Bug Report
-""""""""""""""""""""""""""""""
+.. rubric:: Before Submitting A Bug Report
 
 * Ensure the bug is not already reported by searching on GitHub under `Issues <https://github.com/amarquand/PCNtoolkit/issues>`_
 
-How Do I Submit A Good Bug Report?
-""""""""""""""""""""""""""""""""""
+.. rubric:: How Do I Submit A Good Bug Report?
 
 Bugs are tracked as `GitHub issues <https://github.com/amarquand/PCNtoolkit/issues>`_. Create an issue and provide the following information:
 
@@ -29,8 +27,7 @@ Suggesting New Features
 
 This section guides you through submitting an enhancement suggestion, including completely new features and minor improvements to existing functionality.
 
-How Do I Submit A Good Enhancement Suggestion?
-""""""""""""""""""""""""""""""""""""""""""""""
+.. rubric:: How Do I Submit A Good Enhancement Suggestion?
 
 Enhancement suggestions are tracked as `GitHub issues <https://github.com/amarquand/PCNtoolkit/issues>`_. Create an issue and provide the following information:
 
