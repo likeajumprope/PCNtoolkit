@@ -1,5 +1,5 @@
-BLR
-===
+Bayesian Linear Regression (BLR)
+===============================
 
 Welcome to this tutorial notebook that will go through the fitting and
 evaluation of Normative models with Bayesian Linear Regression (BLR).
