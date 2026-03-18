@@ -3,16 +3,9 @@ Welcome to PCNToolkit's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Setup:
+   :caption: Getting Started
 
    pages/quickstart
-   pages/citing.rst
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Background
-
    pages/background.rst
 
 .. toctree::
@@ -29,14 +22,20 @@ Welcome to PCNToolkit's documentation!
    pages/tutorials/07_cluster.rst
    pages/tutorials/08_command_line_interface.rst
 
-
 .. toctree::
    :maxdepth: 1
-   :caption: For developers
+   :caption: For Developers
 
    pages/contributing.rst
 
    .. pages/FAQs.rst
    .. pages/glossary.rst
    .. pages/acknowledgements.rst
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Miscellaneous
+
+   pages/citing.rst
+   pages/troubleshooting.rst
       
