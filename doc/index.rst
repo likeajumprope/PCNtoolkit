@@ -14,13 +14,6 @@ Welcome to PCNToolkit's documentation!
    :caption: Background
 
    pages/background.rst
-   
-.. toctree::
-   :maxdepth: 1
-   :caption: Function & Class Docs
-
-   api.rst
-
 
 .. toctree::
    :maxdepth: 1
