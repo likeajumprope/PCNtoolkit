@@ -24,18 +24,16 @@ Welcome to PCNToolkit's documentation!
 
 .. toctree::
    :maxdepth: 1
+   :caption: Miscellaneous
+
+   pages/troubleshooting.rst
+   pages/citing.rst
+
+.. toctree::
+   :maxdepth: 1
    :caption: For Developers
 
    pages/contributing.rst
 
-   .. pages/FAQs.rst
-   .. pages/glossary.rst
-   .. pages/acknowledgements.rst
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Miscellaneous
-
-   pages/citing.rst
-   pages/troubleshooting.rst
       
