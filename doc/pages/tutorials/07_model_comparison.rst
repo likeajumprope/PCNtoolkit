@@ -1,3 +1,6 @@
+Compare two HBR models
+================
+
 .. code:: ipython3
 
     import logging

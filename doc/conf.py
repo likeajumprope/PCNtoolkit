@@ -51,7 +51,6 @@ html_theme_options = {
     "collapse_navigation": True,
     "sticky_navigation": True,
     "titles_only": False,
-    "display_version": True,
     "prev_next_buttons_location": "both",
 }
 

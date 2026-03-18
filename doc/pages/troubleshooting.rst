@@ -7,31 +7,25 @@ Getting Help
 NeuroStars Forum
 ~~~~~~~~~~~~~~~~
 
-Search for answers or post your questions on `NeuroStars.org <https://neurostars.org/tags/pcntoolkit>`_. Please add the tag "PCNtoolkit" to your question so that it is easier for others to find and answer.
-NeuroStars is a forum that many neuroscientists interact so it is a good place to ask/answer questions and network with your peers.
+Feel free to look for answers or post your questions on `NeuroStars.org <https://neurostars.org/tags/pcntoolkit>`_. Please add the tag *pcntoolkit* to your post so that it is easier for others to find it.
+
+NeuroStars is a forum where many neuroscientists interact so it is a good place to not only ask your questions but also answer questions and network with your peers!
 
 GitHub Issues
 ~~~~~~~~~~~~~
 
 If you have identified a bug or would like to request a new
-feature, please open an issue on our
-`GitHub issue tracker
-<https://github.com/amarquand/PCNtoolkit/issues>`_.
+feature, please `open an issue <https://github.com/amarquand/PCNtoolkit/issues>`_ on our GitHub account. Following the guidelines below, can help the maintainers and the community better understand your issue and reproduce the behavior: 
 
-Before opening a new issue, search the existing issues to avoid
-duplicates.
+**How do I submit s good bug report?**
 
-**Reporting a bug**
+Please describe:
 
-Please include all of the following so we can reproduce and fix
-the problem quickly:
+* Python and PCNtoolkit versions
+* Minimal reproducible example
+* Full traceback - the complete error message from your terminal or notebook
 
-* **Python and PCNtoolkit versions** 
-* **Minimal reproducible example** — the smallest code snippet
-  that triggers the error
-* **Full traceback** — the complete error message from your terminal or notebook
-
-**Requesting a feature**
+**How do I submit a good feature request?**
 
 Please describe:
 

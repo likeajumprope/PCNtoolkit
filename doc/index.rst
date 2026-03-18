@@ -19,8 +19,18 @@ Welcome to PCNToolkit's documentation!
    pages/tutorials/04_HBR_SHASH.rst
    pages/tutorials/05_HBR_Beta.rst
    pages/tutorials/06_transfer_extend.rst
-   pages/tutorials/07_cluster.rst
-   pages/tutorials/08_command_line_interface.rst
+   pages/tutorials/10_merge.rst
+   pages/tutorials/07_model_comparison.rst
+   pages/tutorials/08_cluster.rst
+   pages/tutorials/09_command_line_interface.rst
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Miscellaneous
+
+   pages/troubleshooting.rst
+   pages/citing.rst
 
 .. toctree::
    :maxdepth: 1
@@ -28,14 +38,5 @@ Welcome to PCNToolkit's documentation!
 
    pages/contributing.rst
 
-   .. pages/FAQs.rst
-   .. pages/glossary.rst
-   .. pages/acknowledgements.rst
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Miscellaneous
-
-   pages/citing.rst
-   pages/troubleshooting.rst
       
