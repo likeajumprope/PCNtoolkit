@@ -5,38 +5,8 @@ First off, thanks for considering contributing to PCNtoolkit! 🎉👍
 
 The following is a set of guidelines for contributing to PCNtoolkit. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
 
-Reporting Bugs
----------------------
-
-This section guides you through submitting a bug report. Following these guidelines helps maintainers and the community understand your report, reproduce the behavior, and find related reports.
-
-.. rubric:: Before Submitting A Bug Report
-
-* Ensure the bug is not already reported by searching on GitHub under `Issues <https://github.com/amarquand/PCNtoolkit/issues>`_
-
-.. rubric:: How Do I Submit A Good Bug Report?
-
-Bugs are tracked as `GitHub issues <https://github.com/amarquand/PCNtoolkit/issues>`_. Create an issue and provide the following information:
-
-* Use a clear and descriptive title for the issue to identify the problem
-* Describe the exact steps which reproduce the problem in as much detail as possible
-* Provide specific examples to demonstrate the steps. Include links to files or GitHub projects, or copy/pasteable snippets
-
-Suggesting New Features
-------------------------
-
-This section guides you through submitting an enhancement suggestion, including completely new features and minor improvements to existing functionality.
-
-.. rubric:: How Do I Submit A Good Enhancement Suggestion?
-
-Enhancement suggestions are tracked as `GitHub issues <https://github.com/amarquand/PCNtoolkit/issues>`_. Create an issue and provide the following information:
-
-* Use a clear and descriptive title for the issue to identify the suggestion
-* Provide a step-by-step description of the suggested enhancement in as much detail as possible
-* Provide specific examples to demonstrate the steps
-
 Setting up your local development environment
------------------
+---------------------------------------------
 
 You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Mac, or Windows with WSL. To contribute to PCNtoolkit you can follow the steps below to set your local development environment:
 

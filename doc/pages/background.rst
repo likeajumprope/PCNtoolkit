@@ -1,6 +1,6 @@
 .. title:: Background
 
-PCNtoolkit Background
+PCNtoolkit background
 ====================================
 
 What is the PCNtoolkit?

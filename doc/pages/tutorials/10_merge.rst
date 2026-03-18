@@ -1,3 +1,6 @@
+Merge normative models
+======================
+
 .. code:: ipython3
 
     import copy
