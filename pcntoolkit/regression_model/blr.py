@@ -187,6 +187,14 @@ class BLR(RegressionModel):
         hyp0 = self.init_hyp()
         args = (Phi, np_Y, Phi_var)
 
+        if self.warp and self.optimizer.lower() == "cg":
+            Output.warning(Warnings.BLR_CG_NOT_SUPPORTED_WITH_WARP)
+            self.optimizer = "l-bfgs-b"
+
+        if self.models_variance and self.optimizer.lower() == "cg":
+            Output.warning(Warnings.BLR_CG_NOT_SUPPORTED_WITH_HETEROSKEDASTIC)
+            self.optimizer = "l-bfgs-b"
+
         match self.optimizer.lower():
             case "cg":
                 out = optimize.fmin_cg(
@@ -198,8 +206,20 @@ class BLR(RegressionModel):
                     maxiter=self.n_iter,
                     full_output=1,
                 )
+
             case "powell":
-                out = optimize.fmin_powell(func=self.loglik, x0=hyp0, args=args, full_output=1)
+                # Run Powell optimiser with the supplied initial hyps
+                out = optimize.fmin_powell(
+                    func=self.loglik,
+                    x0=hyp0,
+                    args=args,
+                    full_output=1,
+                )
+                # If at least one hyperparameter is non-finite, output an error
+                # and recommend to the user the more robust l-bfgs-b optimizer
+                if not np.all(np.isfinite(np.exp(out[0]))):
+                    raise OverflowError(Output.error(
+                        Errors.ERROR_BLR_POWELL))
             case "nelder-mead":
                 out = optimize.fmin(func=self.loglik, x0=hyp0, args=args, full_output=1)
             case "l-bfgs-b":
@@ -339,6 +359,7 @@ class BLR(RegressionModel):
                 self.ys[mask] = self.ys[mask] + residual_mean
                 self.s2[mask] = np.square(np.sqrt(self.s2[mask]) * correction_factor)
 
+        # Compute the centiles in the original Y space: centiles = Z * std + mean
         centiles = np_Z * np.sqrt(self.s2) + self.ys
         if self.warp:
             centiles = self.warp.invf(centiles, self.gamma)
@@ -668,10 +689,12 @@ class BLR(RegressionModel):
         else:
             raise ValueError(Output.error(Errors.BLR_HYPERPARAMETER_VECTOR_INVALID_LENGTH))
 
-        # Compute the posterior precision and mean
+        # Compute the posterior precision matrix A
         XtLambda_n = X.T * self.lambda_n_vec
         self.A = XtLambda_n.dot(X) + self.Lambda_a
         invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+
+        # Compute the posterior mean m
         self.m = (invAXt * self.lambda_n_vec).dot(y)
 
     def loglik(
@@ -800,8 +823,16 @@ class BLR(RegressionModel):
         alpha, beta, gamma = self.parse_hyps(hyp, X, var_X)
 
         if self.warp:
+            # Analytical gradients (dloglik) are not implemented for warped
+            # models
             raise ValueError(
-                Output.error(Errors.ERROR_UNKNOWN_FUNCTION_FOR_CLASS, func="dloglik", class_name=self.__class__.__name__)
+                Output.error(Errors.ERROR_BLR_CG_NOT_SUPPORTED_WITH_WARP)
+            )
+
+        if self.models_variance:
+            raise NotImplementedError(
+                "Analytical gradients are not implemented for heteroskedastic models. "
+                "Use optimizer='l-bfgs-b' instead."
             )
 
         # load posterior and prior covariance
@@ -864,7 +895,7 @@ class BLR(RegressionModel):
             )
 
         # scaling parameter(s)
-        for i, _ in enumerate(beta):
+        for i, _ in enumerate(alpha):
             # first compute derivatives with respect to alpha
             if len(alpha) == self.D:  # are we using ARD?
                 dLambda_a = np.zeros((self.D, self.D))

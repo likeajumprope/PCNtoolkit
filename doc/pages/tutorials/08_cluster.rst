@@ -1,5 +1,5 @@
-Fitting normative models on a compute cluster
-=============================================
+Fit normative models on a compute cluster
+=========================================
 
 This notebook will go through the options of the runner class. We will
 show how to fit and evaluate a model in parallel, and how to do

@@ -1,8 +1,8 @@
-Normative Modelling: Hierarchical Bayesian Regression with Normal likelihood
-============================================================================
+HBR with Normal likelihood
+==========================
 
 Welcome to this tutorial notebook that will go through the fitting and
-evaluation of Normative models with a Hierarchical Bayesian Regression
+evaluation of Normative models with a Hierarchical Bayesian Regression (HBR)
 model using a Normal likelihood.
 
 Let’s jump right in.

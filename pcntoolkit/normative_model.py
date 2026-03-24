@@ -54,6 +54,13 @@ class NormativeModel:
         Input (X/covariates) scaler to use.
     outscaler: str
         Output (Y/response_vars) scaler to use.
+    y_transform : str or None
+        Optional transform applied to Y before fitting and inverted
+        after prediction. Currently supported:
+        - ``"log1p"`` applies log(Y+1)
+        - ``"log"`` applies natural log(Y)
+        This is useful for phenotypes that cannot be negative.
+        Default is ``None`` (no transform).
     name: str
         Name of the model
     """
@@ -68,6 +75,7 @@ class NormativeModel:
         save_dir: Optional[str] = None,
         inscaler: str = "standardize",
         outscaler: str = "standardize",
+        y_transform: Optional[str] = None,
         name: Optional[str] = None,
     ):
         self.savemodel: bool = savemodel
@@ -77,6 +85,7 @@ class NormativeModel:
         self._save_dir = save_dir if save_dir is not None else get_default_save_dir()
         self.inscaler: str = inscaler
         self.outscaler: str = outscaler
+        self.y_transform: Optional[str] = y_transform
         self.name: Optional[str] = name
         self.response_vars: list[str] = None  # type: ignore
         self.template_regression_model: RegressionModel = template_regression_model
@@ -143,6 +152,7 @@ class NormativeModel:
         self.set_ensure_save_dirs()
         self.compute_zscores(data)
         self.compute_centiles(data, recompute=True)
+        self.compute_baseline_logp(data)
         self.compute_logp(data)
         self.compute_yhat(data)
         if self.evaluate_model:
@@ -180,6 +190,7 @@ class NormativeModel:
             saveplots=True,
             inscaler=self.inscaler,
             outscaler=self.outscaler,
+            y_transform=self.y_transform,
             save_dir=self.save_dir,
         )
         if save_dir is not None:
@@ -239,6 +250,7 @@ class NormativeModel:
             saveplots=True,
             inscaler=self.inscaler,
             outscaler=self.outscaler,
+            y_transform=self.y_transform,
             save_dir=save_dir,
         )
 
@@ -459,6 +471,7 @@ class NormativeModel:
         outscaler = metadata["outscaler"]
         saveplots = metadata["saveplots"]
         evaluate_model = metadata["evaluate_model"]
+        y_transform = metadata.get("y_transform", None)
         name = metadata["name"]
 
         response_vars = []
@@ -491,6 +504,7 @@ class NormativeModel:
                 save_dir=save_dir,
                 inscaler=inscaler,
                 outscaler=outscaler,
+                y_transform=y_transform,
                 name=name,
             )
         else:
@@ -548,9 +562,13 @@ class NormativeModel:
         """
         Applies preprocessing transformations to the input data.
 
+        First applies an optional response transform (e.g. log1p), then scales.
+
         Args:
             data (NormData): Data to preprocess.
         """
+        # Enforce positivity if necessary
+        self._apply_y_transform(data)
         self.scale_forward(data)
 
     def scale_forward(self, data: NormData, overwrite: bool = False) -> None:
@@ -585,10 +603,15 @@ class NormativeModel:
     def postprocess(self, data: NormData) -> None:
         """Apply postprocessing to the data.
 
+        First unscales, then applies the inverse response transform (e.g. expm1).
+
         Args:
             data (NormData): Data to postprocess.
         """
         self.scale_backward(data)
+        # Invert Y to its original space if positivity was enforced during 
+        # preprocessing
+        self._invert_y_transform(data)
 
     def scale_backward(self, data: NormData) -> None:
         """
@@ -605,6 +628,80 @@ class NormativeModel:
         """
         data.scale_backward(self.inscalers, self.outscalers)
 
+    def _apply_y_transform(self, data: NormData) -> None:
+        """
+        Apply the forward response transform (e.g. log1p) to Y-like variables 
+        in the data.
+        
+        Parameters
+        ----------
+        data : NormData
+            Data object containing response variable arrays (Y, Yhat, 
+            centiles, thrive_Y) to which the transform should be applied.
+        
+        """
+        if self.y_transform is None:
+            return
+      
+        # TODO: Check if we need to track if transform has already been 
+        # applied to avoid double-inverting. Normally I dont expect any issues 
+        # as every process() is followed by a postprocess(). The only issues can
+        # be if users call postprocess() multiple times manually or with
+        # compute_thrivelines() that has a preprocess() call without a postprocess().
+            
+        if self.y_transform == "log1p":
+            # Apply log1p transform to the response variable Y
+            for var in ["Y"]:
+                if (data[var] < -1).any():
+                    raise ValueError("Cannot apply log1p transform to variable "
+                                     f"'{var}' because it contains values less "
+                                     "than -1."
+                                     )
+                else:
+                    data[var] = np.log1p(data[var])
+                    
+        elif self.y_transform == "log":
+            # Apply natural log transform to the response variable Y
+            for var in ["Y"]:
+                if (data[var] <= 0).any():
+                    raise ValueError(
+                        f"Cannot apply log transform to variable '{var}' "
+                        "because it contains non-positive values. "
+                        "Consider using 'log1p' transform or ensuring "
+                        "all values are positive."
+                    )
+                else:
+                    data[var] = np.log(data[var])
+
+    def _invert_y_transform(self, data: NormData) -> None:
+        """
+        Apply the inverse response transform (e.g. expm1) to Y-like variables
+        in the data.
+        
+        Parameters
+        ----------
+        data : NormData
+            Data object containing response variable arrays (Y, Yhat,
+            centiles, thrive_Y) to which the inverse transform should be applied.
+        """
+        if self.y_transform is None:
+            return
+        
+        # TODO: Check if we need to track if inverse transform has already been 
+        # applied to avoid double-inverting. Normally I dont expect any issues 
+        # as every process() is followed by a postprocess(). The only issues can
+        # be if users call postprocess() multiple times manually or with
+        # compute_thrivelines() that has a preprocess() call without a postprocess().
+            
+        if self.y_transform == "log1p":
+            for var in ("Y", "centiles", "Yhat", "Y_harmonized", "thrive_Y"):
+                if var in data.data_vars:
+                    data[var] = np.expm1(data[var])
+        elif self.y_transform == "log":
+            for var in ("Y", "centiles", "Yhat", "Y_harmonized", "thrive_Y"):
+                if var in data.data_vars:
+                    data[var] = np.exp(data[var])
+            
     def evaluate(self, data: NormData) -> None:
         """
         Evaluates the model performance on the data.
@@ -716,9 +813,70 @@ class NormativeModel:
         self.postprocess(data)
         return data
 
+    def compute_baseline_logp(self, data: NormData) -> NormData:
+        """
+        Computes the log-probability of the data under a simple Gaussian model.
+        
+        The baseline model is a Gaussian with mean and standard deviation
+        computed from the scaled Y data. This serves as a null model reference
+        to evaluate for example the MSLL (Mean Standardized Log Loss) of our
+        fitted model.
+
+        Parameters
+        ----------
+        data : NormData
+            Test data containing response variables (Y).
+
+        Returns
+        -------
+        NormData
+            Data with baseline_logp computed for each response variable.
+        """
+        self.preprocess(data)
+
+        # Initialize logp array for a baseline Gaussian model with mean/std of the data
+        respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
+        data["baseline_logp"] = xr.DataArray(
+            np.zeros((data.X.shape[0], len(respvar_intersection))),
+            dims=("observations", "response_vars"),
+            coords={"observations": data.observations},
+        )
+
+        # Compute the baseline Gaussian's model logp on scaled Y data
+        Output.print(Messages.COMPUTING_LOGP, n_models=len(respvar_intersection))
+        for responsevar in respvar_intersection:
+            resp_predict_data = data.sel({"response_vars": responsevar})
+            _, _, _, Y, _ = self.extract_data(resp_predict_data)
+            y_scaled = Y.values
+            baseline_logp = self.elemwise_logp_baseline_model(y_scaled)
+            data["baseline_logp"].loc[{"response_vars": responsevar}] = baseline_logp
+
+        self.postprocess(data)
+        return data
+    
+    @staticmethod
+    def elemwise_logp_baseline_model(y_scaled: np.ndarray) -> np.ndarray:
+        """
+        Compute log-probability for each observation under a baseline 
+        Gaussian model.
+        
+        Parameters
+        ----------
+        y_scaled : np.ndarray
+            Scaled response variable values.
+            
+        Returns
+        -------
+        np.ndarray
+            Log-probability
+        """
+        baseline_mu = np.mean(y_scaled)
+        baseline_sigma = np.std(y_scaled)
+        return -0.5 * np.log(2 * np.pi * baseline_sigma**2) - ((y_scaled - baseline_mu) ** 2) / (2 * baseline_sigma**2)
+
     def compute_logp(self, data: NormData) -> NormData:
         """
-        Computes the log-probability of the data under the model.
+        Computes the log-probability of the data under the fitted model.
 
         Parameters
         ----------
@@ -729,10 +887,11 @@ class NormativeModel:
         -------
         NormData
             Prediction results containing:
-            - Logp: log-probability of the response variables per datapoint
+            - logp: log-probability of the response variables per datapoint under the fitted model
         """
         self.preprocess(data)
 
+        # Initialise logp array with the correct dimensions and coordinates
         respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
         data["logp"] = xr.DataArray(
             np.zeros((data.X.shape[0], len(respvar_intersection))),
@@ -740,6 +899,7 @@ class NormativeModel:
             coords={"observations": data.observations},
         )
 
+        # Compute the fitted model's logp on scaled Y data
         Output.print(Messages.COMPUTING_LOGP, n_models=len(respvar_intersection))
         for responsevar in respvar_intersection:
             resp_predict_data = data.sel({"response_vars": responsevar})
@@ -927,6 +1087,7 @@ class NormativeModel:
             "is_fitted": self.is_fitted,
             "inscaler": self.inscaler,
             "outscaler": self.outscaler,
+            "y_transform": self.y_transform,
             "ptk_version": importlib.metadata.version("pcntoolkit"),
         }
 
@@ -986,6 +1147,7 @@ class NormativeModel:
         inscaler = kwargs.get("inscaler", "none")
         outscaler = kwargs.get("outscaler", "none")
         name = kwargs.get("name", None)
+        y_transform = kwargs.get("y_transform", None)
         assert "alg" in kwargs, "Algorithm must be specified"
         if kwargs["alg"] == "blr":
             template_regression_model = BLR.from_args("template", kwargs)
@@ -1004,6 +1166,7 @@ class NormativeModel:
             save_dir=save_dir,
             inscaler=inscaler,
             outscaler=outscaler,
+            y_transform=y_transform,
             name=name,
         )
 

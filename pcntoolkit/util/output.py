@@ -101,7 +101,11 @@ class Warnings:
     EXTRA_COVARIATES = "The dataset {dataset_name} has too many covariates: {covariates}"
     EXTRA_RESPONSE_VARS = "The dataset {dataset_name} has too many response variables: {response_vars}"
     UNKNOWN_BATCH_EFFECTS = "The dataset {dataset_name} has unknown batch effects: {batch_effects}"
-    BLR_ESTIMATION_OF_POSTERIOR_DISTRIBUTION_FAILED = "Estimation of posterior distribution failed due to: \n{error}"
+    BLR_ESTIMATION_OF_POSTERIOR_DISTRIBUTION_FAILED = (
+        "Posterior estimation failed: \n{error}. "
+        "\nThe optimizer could not find a stable solution. "
+        "Retrying optimization."
+    )
     ERROR_GETTING_JOB_STATUSES = "Error getting job statuses: {stderr}"
     ERROR_PARSING_JOB_STATUS_LINE = "Error parsing job status line: {line} - {error}"
     PREDICT_DATA_NOT_USED_IN_KFOLD_CROSS_VALIDATION = "Predict data not used in k-fold cross-validation"
@@ -136,7 +140,16 @@ class Warnings:
     LOADING_DATA_NOT_SUPPORTED_FOR_CROSS_VALIDATION = (
         "Automatic data loading by the Runner is not supported for cross-validation."
     )
-
+    BLR_CG_NOT_SUPPORTED_WITH_WARP = (
+        "The 'cg' optimizer requires analytical gradients, which are not implemented for warped models. "
+        "Falling back to the default 'l-bfgs-b' optimizer. "
+        "Please set optimizer='l-bfgs-b' to avoid this warning."
+    )
+    BLR_CG_NOT_SUPPORTED_WITH_HETEROSKEDASTIC = (
+        "The 'cg' optimizer requires analytical gradients, which are not implemented for heteroskedastic models. "
+        "Falling back to the default 'l-bfgs-b' optimizer. "
+        "Please set optimizer='l-bfgs-b' to avoid this warning."
+    )
 
 class Errors:
     ERROR_BATCH_SIZE_AND_N_BATCHES_MISMATCH = "Batch size ({batch_size}) and number of batches ({n_batches}) are both specified, but do not match the number of response variables ({n_response_vars})"
@@ -164,7 +177,11 @@ class Errors:
     BLR_X_NOT_PROVIDED = "X is not provided"
     ERROR_UNKNOWN_FUNCTION = "Unknown function {func}"
     ERROR_ARGUMENT_SPECIFIED_TWICE = "Argument {key} is specified twice."
-    ERROR_UNKNOWN_FUNCTION_FOR_CLASS = "Unknown function {func} for class {class_name}"
+    ERROR_BLR_CG_NOT_SUPPORTED_WITH_WARP = (
+        "The 'cg' optimizer requires analytical gradients, which are not "
+        "implemented for warped models. "
+        "Please set optimizer='l-bfgs-b' to avoid this error."
+    )
     BLR_ERROR_NO_DESIGN_MATRIX_CREATED = "No design matrix created"
     ERROR_UNKNOWN_CLASS = "Unknown class {class_name}"
     ERROR_FILE_NOT_FOUND = "File not found: {path}"
@@ -208,6 +225,11 @@ class Errors:
     OFFSET_NOT_VALID = "Invalid list of offsets provided"
     WB_COMMAND_FAILED = "wb_command failed with error: {error}"
     WB_COMMAND_NOT_FOUND = "wb_command not found in PATH"
+    ERROR_BLR_POWELL = (
+        "Powell optimizer failed. "
+        "We recommend running your code again and "
+        "setting optimizer='l-bfgs-b'."
+    )
 
 
 class Output:

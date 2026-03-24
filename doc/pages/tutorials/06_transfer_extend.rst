@@ -1,5 +1,5 @@
-Transfering and extending normative models
-==========================================
+Transfer and extend normative models
+====================================
 
 Welcome to this tutorial notebook that will go through the transfering
 and extending of existing models on new data.

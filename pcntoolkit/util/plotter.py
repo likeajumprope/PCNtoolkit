@@ -56,15 +56,17 @@ def plot_centiles(
         - edgecolor: The edge color of the scatter points. Hex code or matplotlib color name.
         - linewidth: The width of the edge of the scatter points. 0 for no edge.
     """
-    default_scatter_kwargs = {
-        "color": "#f7932f",
-        "alpha": min(1, 20/np.sqrt(len(scatter_data.X))),
-        "s": 30,
-        "marker": "o",
-        "edgecolor": "black",
-        "linewidth": 0,
-    }
-    complete_scatter_kwargs = default_scatter_kwargs | scatter_kwargs
+    complete_scatter_kwargs: dict = {}
+    if scatter_data is not None:
+        default_scatter_kwargs = {
+            "color": "#f7932f",
+            "alpha": min(1, 20 / np.sqrt(len(scatter_data.X))),
+            "s": 30,
+            "marker": "o",
+            "edgecolor": "black",
+            "linewidth": 0,
+        }
+        complete_scatter_kwargs = default_scatter_kwargs | scatter_kwargs
 
 
     if covariate is None:
@@ -79,6 +81,7 @@ def plot_centiles(
     if response_vars is None:
         response_vars = model.response_vars
     response_vars = list(set(model.response_vars).intersection(set(response_vars)))
+    # Select the batch effect that has the most data in the scatter data
     batch_effects = {k: max(v.items(), key=lambda x: x[1])[0] for k, v in model.batch_effect_counts.items()}
 
     # Create some synthetic data with a single batch effect
@@ -86,20 +89,23 @@ def plot_centiles(
     centile_covariates = np.linspace(covariate_range[0], covariate_range[1], 150)
     centile_df = pd.DataFrame({covariate: centile_covariates})
 
-    # TODO: use the mean here
-    # Any other covariates are taken to be the midpoint between the observed min and max
+    # Any other covariates are taken to be the mean of the scatter data, or the midpoint of the covariate range
     for cov in model.covariates:
         if cov != covariate:
             minc = model.covariate_ranges[cov]["min"]
             maxc = model.covariate_ranges[cov]["max"]
-            centile_df[cov] = (minc + maxc) / 2
+            if scatter_data is not None:
+                centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
+            else:
+                centile_df[cov] = (minc + maxc) / 2
 
     # Batch effects are the first ones in the highlighted batch effects
     for be, v in batch_effects.items():
         centile_df[be] = v
-    # Response vars are all 0, we don't need them
+    # Assign random values for response vars because they are not needed.
+    # They must be > 0 to satisfy later checks that require response_vars > 0.
     for rv in response_vars:
-        centile_df[rv] = 0
+        centile_df[rv] = 1e-6
 
     centile_data = NormData.from_dataframe(
         "centile",
@@ -203,12 +209,11 @@ def _plot_centiles(
             **scatter_kwargs
         )
 
-        if scatter_data:
-            plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
-            title = f"Centiles of {response_var}\n With harmonized {scatter_data.name} data"
-        else:
-            plotname = f"centiles_{response_var}"
-            title = f"Centiles of {response_var}"
+        plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
+        title = f"Centiles of {response_var}\n With harmonized {scatter_data.name} data"
+    else:
+        plotname = f"centiles_{response_var}"
+        title = f"Centiles of {response_var}"
 
     plt.title(title)
     plt.xlabel(covariate)
@@ -260,8 +265,8 @@ def plot_centiles_advanced(
         A list of x-coordinates for which to plot the conditionals
     covariate: str | None, optional
         The covariate to plot on the x-axis. If None, the first covariate in the model will be used.
-    covariate_range: tuple[float, float], optional
-        The range of the covariate to plot on the x-axis. If None, the range of the covariate that was in the train data will be used.s
+    covariate_ranges: tuple[float, float], optional
+        The range of the covariate to plot on the x-axis. If None, the range of the covariate that was in the train data will be used.
     response_vars: List[str] | None
         The response vars for which to make the plots. All are plotted if this is None, which is default.
     batch_effects: Dict[str, List[str]] | None | Literal["all"], optional
@@ -315,8 +320,10 @@ def plot_centiles_advanced(
         for c in model.covariates:
             cov = scatter_data.X.sel(covariates=c).values
             min, max = covariate_ranges[c]
-            idx = np.where((cov > min) & (cov < max))[0]
-            scatter_data = scatter_data.sel(observations=scatter_data.observations[idx])
+            idx = np.where((cov >= min) & (cov <= max))[0]
+            scatter_data = scatter_data.sel(
+                observations=scatter_data.observations[idx]
+            )
 
     if batch_effects == "all":
         if scatter_data:
@@ -325,6 +332,7 @@ def plot_centiles_advanced(
             batch_effects = model.unique_batch_effects
     elif batch_effects is None:
         if scatter_data:
+            # Select the first batch effect based on alphabetical order
             batch_effects = {k: [v[0]] for k, v in scatter_data.unique_batch_effects.items()}
         else:
             batch_effects = {k: [v[0]] for k, v in model.unique_batch_effects.items()}
@@ -337,19 +345,22 @@ def plot_centiles_advanced(
     centile_covariates = np.linspace(covariate_ranges[covariate][0], covariate_ranges[covariate][1], 150)
     centile_df = pd.DataFrame({covariate: centile_covariates})
 
-    # TODO: use the mean here
-    # Any other covariates are taken to be the midpoint between the observed min and max
+    # Any other covariates are taken to be the mean of the scatter data, or the midpoint of the covariate range
     for cov in model.covariates:
         if cov != covariate:
             minc, maxc = covariate_ranges[cov]
-            centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
+            if scatter_data is not None:
+                centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
+            else:
+                centile_df[cov] = (minc + maxc) / 2
 
     # Batch effects are the first ones in the highlighted batch effects
     for be, v in batch_effects.items():
         centile_df[be] = v[0]
-    # Response vars are all 0, we don't need them
+    # Assign random values for response vars because they are not needed.
+    # They must be > 0 to satisfy later checks that require response_vars > 0.
     for rv in model.response_vars:
-        centile_df[rv] = 0
+        centile_df[rv] = 1e-6
     centile_data = NormData.from_dataframe(
         "centile",
         dataframe=centile_df,
@@ -570,6 +581,7 @@ def _plot_centiles_advanced(
                 plt.legend().remove()
 
     title = f"Centiles of {response_var}"
+    plotname = f"centiles_{response_var}"
     if scatter_data:
         if harmonize_data:
             plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
