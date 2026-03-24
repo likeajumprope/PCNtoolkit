@@ -1,8 +1,8 @@
 cff-version: "1.2.0"
 message: "If you use this software, please cite it using the metadata below."
 title: "PCNtoolkit"
-version: "1.1.2"
-date-released: "2025-11-20"
+version: "1.2.0"
+date-released: "2026-03-24"
 doi: "10.5281/zenodo.5207839"
 authors:
   - family-names: "Marquand"
@@ -84,9 +84,9 @@ keywords:
   - "federated learning"
   - "Bayesian modeling"
   - "software toolkit"
-license: "MIT"
+license: "GPL-3.0-only"
 repository-code: "https://github.com/amarquand/PCNtoolkit"
-url: "https://github.com/andmarquand/PCNtoolkit"
+url: "https://github.com/amarquand/PCNtoolkit"
 abstract: >
   PCNtoolkit is a lightweight Python package designed to support
   normative modeling workflows in neuroscience.
