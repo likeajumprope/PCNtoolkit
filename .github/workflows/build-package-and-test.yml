@@ -1,0 +1,46 @@
+# Build the package from source and run the full test suite. 
+# This catches packaging issues (missing files, broken imports).
+
+name: build-and-test
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: # test against the python versions that we support for the users
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build package
+        run: python -m build
+
+      - name: Install wheel and dependencies to run tests
+        run: | # we build the package from the wheel as a user that runs 'pip install pcntoolkit' would
+          pip install dist/*.whl
+          pip install pytest pytest-cov
+
+      - name: Run tests
+        run: pytest test/ --junitxml=report.xml
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-py${{ matrix.python-version }}
+          path: report.xml
