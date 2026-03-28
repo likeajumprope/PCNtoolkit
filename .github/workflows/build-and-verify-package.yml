@@ -12,7 +12,7 @@ jobs:
   build-and-verify:
     runs-on: ubuntu-latest
     strategy:
-      matrix: # test against the python versions that we support for the users
+      matrix:
         python-version: ["3.12"]
 
     steps:
