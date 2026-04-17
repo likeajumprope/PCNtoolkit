@@ -100,3 +100,9 @@ cspell.json
 examples/sandbox_2.ipynb
 doc/pages/tutorials/sandbox_2_files/*
 doc/pages/tutorials/sandbox_2.rst
+
+resources/
+save_dir_DK_all_regions/
+save_dir_SC_all_regions/
+
+
